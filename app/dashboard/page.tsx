@@ -3,183 +3,99 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Box, Truck, BarChart3, Users, LogOut, ShieldCheck, Building, Copy, Check } from 'lucide-react';
-
-interface UserOrgInfo {
-  orgName: string;
-  orgCode: string;
-  role: string;
-}
+import Link from 'next/link';
+import { Box, Truck, BarChart3, Users, ExternalLink, ShieldCheck } from 'lucide-react';
 
 export default function DashboardPage() {
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [orgInfo, setOrgInfo] = useState<UserOrgInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
-  
   const router = useRouter();
   const supabase = createClient();
+  
+  // 8080 레거시/실무 시스템 호출 전용 함수 (버튼 클릭 시에만 동작)
+  const handleOpenSpringService = async (servicePath: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
 
-  useEffect(() => {
-    const checkUserAndOrg = async () => {
-      // 1. 유저 세션 확인
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) {
-        router.push('/login');
-        return;
-      }
+    if (!session) {
+      alert('세션이 만료되었습니다. 다시 로그인해 주세요.');
+      router.push('/login');
+      return;
+    }
 
-      setUserEmail(user.email ?? '');
+    const accessToken = session.access_token;
+    const springApiUrl = process.env.NEXT_PUBLIC_SPRING_API_URL || 'http://192.168.211.230:8080';
 
-      // 2. 유저의 프로필 및 조직 정보 조회 (Join)
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select(`
-          role,
-          organizations (
-            org_name,
-            org_code
-          )
-        `)
-        .eq('id', user.id)
-        .single();
-
-      if (profile && profile.organizations) {
-        // 그룹에 속해있는 경우
-        const orgs = profile.organizations as any;
-        setOrgInfo({
-          orgName: orgs.org_name,
-          orgCode: orgs.org_code,
-          role: profile.role,
-        });
-      } else {
-        // 개인 사용자일 경우
-        setOrgInfo({
-          orgName: '개인 워크스페이스',
-          orgCode: 'PERSONAL',
-          role: 'individual',
-        });
-      }
-
-      setLoading(false);
-    };
-
-    checkUserAndOrg();
-  }, [router, supabase]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
+    // 토큰을 파라미터로 넘기며 8080 서비스 새 탭으로 실행
+    const targetUrl = `${springApiUrl}/sso/login?token=${encodeURIComponent(accessToken)}&redirect=${encodeURIComponent(servicePath)}`;
+    window.open(targetUrl, '_blank');
   };
-
-  // 그룹코드 클립보드 복사 기능
-  const handleCopyCode = () => {
-    if (!orgInfo?.orgCode || orgInfo.orgCode === 'PERSONAL') return;
-    navigator.clipboard.writeText(orgInfo.orgCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
-        <p className="text-lg font-medium">물류 시스템 세션 확인 중...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+      {/* 1. 사이드바 (Next.js 내부 라우팅 전용) */}
       <aside className="w-72 bg-slate-900 border-r border-slate-800 p-5 flex flex-col justify-between hidden md:flex">
         <div>
-          {/* 시스템 브랜드 로고 */}
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6">
             DOT2LINE Logistics SCM
           </div>
 
-          {/* ★ 핵심 요구사항: 가장 눈에 띄는 최상단 그룹 배지 ★ */}
-          <div className="mb-6 p-3.5 bg-indigo-950/60 border border-indigo-500/30 rounded-xl">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <Building size={16} className="text-indigo-400" />
-                <span className="text-xs font-semibold text-indigo-300">소속 그룹</span>
-              </div>
-              <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30">
-                {orgInfo?.role}
-              </span>
-            </div>
-
-            {/* 회사/그룹명 */}
-            <h3 className="text-lg font-extrabold text-white truncate my-1">
-              {orgInfo?.orgName}
-            </h3>
-
-            {/* 그룹코드 & 복사 버튼 */}
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-indigo-900/50">
-              <span className="text-xs font-mono text-slate-400">
-                CODE: <strong className="text-indigo-200">{orgInfo?.orgCode}</strong>
-              </span>
-
-              {orgInfo?.orgCode !== 'PERSONAL' && (
-                <button
-                  onClick={handleCopyCode}
-                  title="그룹코드 복사"
-                  className="p-1 hover:bg-indigo-900/60 rounded text-indigo-300 transition flex items-center gap-1 text-[11px]"
-                >
-                  {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                  <span>{copied ? '복사됨' : '복사'}</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* 메뉴 카테고리 */}
           <nav className="space-y-1.5">
-            <SidebarLink icon={<Users size={18} />} text="통합 기준정보 (MDM)" active />
-            <SidebarLink icon={<Box size={18} />} text="창고 관리 (WMS)" />
-            <SidebarLink icon={<Truck size={18} />} text="수배송 관리 (TMS)" />
-            <SidebarLink icon={<BarChart3 size={18} />} text="통합 정산 시스템" />
+            {/* 메뉴를 누르면 Next.js 내부 페이지로 자연스럽게 이동 */}
+            <SidebarLink href="/dashboard" icon={<BarChart3 size={18} />} text="종합 관제 대시보드" active />
+            <SidebarLink href="/dashboard/mdm" icon={<Users size={18} />} text="통합 기준정보 (MDM)" />
+            <SidebarLink href="/dashboard/wms" icon={<Box size={18} />} text="창고 관리 (WMS)" />
+            <SidebarLink href="/dashboard/tms" icon={<Truck size={18} />} text="수배송 관리 (TMS)" />
           </nav>
-        </div>
-
-        {/* 유저 프로필 및 로그아웃 */}
-        <div className="border-t border-slate-800 pt-4">
-          <p className="text-xs text-slate-500 mb-1">로그인 계정</p>
-          <p className="text-sm font-medium text-slate-300 truncate mb-3">{userEmail}</p>
-          <button
-            onClick={handleLogout}
-            className="w-full py-2 bg-slate-800 hover:bg-red-900/40 hover:text-red-400 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
-          >
-            <LogOut size={14} /> 로그아웃
-          </button>
         </div>
       </aside>
 
-      {/* 메인 콘텐츠 영역 */}
+      {/* 2. 메인 화면 영역 */}
       <main className="flex-1 p-8 overflow-y-auto">
         <header className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold">종합 관제 대시보드</h1>
-            <p className="text-sm text-slate-400">
-              현재 <span className="text-indigo-400 font-semibold">[{orgInfo?.orgName}]</span> 스코프에서 구동 중입니다.
-            </p>
+            <h1 className="text-2xl font-bold">수배송 관리 (TMS) 현황</h1>
+            <p className="text-sm text-slate-400">실시간 배차 현황 및 운송 데이터를 한눈에 확인합니다.</p>
           </div>
-          <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 px-4 py-2 rounded-full text-indigo-400 text-sm">
-            <ShieldCheck size={16} /> 보안 세션 연결됨
-          </div>
+          
+          {/* ★ 핵심: 실제 '일'을 하러 8080 시스템으로 넘어가는 전용 실행 버튼 ★ */}
+          <button
+            onClick={() => handleOpenSpringService('/index2')}
+            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-sm flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition hover:scale-105"
+          >
+            <span>시스템 열기</span>
+            <ExternalLink size={16} />
+          </button>
         </header>
 
-        {/* 본문 콘텐츠 ... */}
+        {/* 대시보드 내에서는 가볍게 현황 지표 및 요약 정보만 조회 */}
+        <section className="grid sm:grid-cols-3 gap-6 mb-8">
+          <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+            <p className="text-slate-400 text-sm">오늘의 배차 건수</p>
+            <p className="text-3xl font-bold mt-2">128 건</p>
+          </div>
+          <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+            <p className="text-slate-400 text-sm">운행 중 차량</p>
+            <p className="text-3xl font-bold mt-2 text-indigo-400">42 대</p>
+          </div>
+          <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+            <p className="text-slate-400 text-sm">배송 완료율</p>
+            <p className="text-3xl font-bold mt-2 text-emerald-400">94.2%</p>
+          </div>
+        </section>
       </main>
     </div>
   );
 }
 
-function SidebarLink({ icon, text, active = false }: { icon: React.ReactNode; text: string; active?: boolean }) {
+// 사이드바 링크 컴포넌트 (Next.js Link 활용)
+function SidebarLink({ href, icon, text, active = false }: { href: string; icon: React.ReactNode; text: string; active?: boolean }) {
   return (
-    <button className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${active ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}>
+    <Link
+      href={href}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${
+        active ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+      }`}
+    >
       {icon}
       {text}
-    </button>
+    </Link>
   );
 }
