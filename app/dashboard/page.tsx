@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Box, Truck, BarChart3, Users, LogOut, ShieldCheck, Building, Copy, Check, ExternalLink } from 'lucide-react';
 
 interface UserOrgInfo {
+  userName: string; // ★ 추가
   orgName: string;
   orgCode: string;
   role: string;
@@ -34,11 +35,12 @@ export default function DashboardPage() {
     const accessToken = session.access_token;
     const springApiUrl = process.env.NEXT_PUBLIC_SPRING_API_URL || 'http://localhost:8080';
 
+    const currentUserName = orgInfo?.userName || ''; // ★ 추가
     const currentOrgCode = orgInfo?.orgCode || '';
     const currentRole = orgInfo?.role || 'member'; // ★ role 추가 (owner, admin, user 등)
 
-    // targetUrl에 role 파라미터 추가
-    const targetUrl = `${springApiUrl}/sso/login?token=${encodeURIComponent(accessToken)}&orgCode=${encodeURIComponent(currentOrgCode)}&role=${encodeURIComponent(currentRole)}&redirect=${encodeURIComponent(servicePath)}`;
+    // ★ URL 파라미터에 userName 추가 전달
+    const targetUrl = `${springApiUrl}/sso/login?token=${encodeURIComponent(accessToken)}&userName=${encodeURIComponent(currentUserName)}&orgCode=${encodeURIComponent(currentOrgCode)}&role=${encodeURIComponent(currentRole)}&redirect=${encodeURIComponent(servicePath)}`;
 
     window.open(targetUrl, '_blank');
   };
@@ -53,10 +55,11 @@ export default function DashboardPage() {
 
       setUserEmail(user.email ?? '');
 
-      // 프로필 및 조직 정보 조회 (명시적 FK 조인)
+      // ★ user_name 컬럼 추가 조회
       const { data: profile } = await supabase
         .from('profiles')
         .select(`
+          user_name,
           role,
           organizations:org_id (
             org_name,
@@ -69,8 +72,11 @@ export default function DashboardPage() {
       const rawOrg = profile?.organizations;
       const orgData = Array.isArray(rawOrg) ? rawOrg[0] : rawOrg;
 
+      const fallbackName = user.email ? user.email.split('@')[0] : '사용자';
+
       if (profile && orgData && orgData.org_code) {
         setOrgInfo({
+          userName: profile.user_name || fallbackName, // ★ 추가
           orgName: orgData.org_name,
           orgCode: orgData.org_code,
           role: profile.role || 'user',
@@ -78,6 +84,7 @@ export default function DashboardPage() {
       } else {
         const emailPrefix = user.email ? user.email.split('@')[0].toUpperCase() : 'USER';
         setOrgInfo({
+          userName: profile?.user_name || fallbackName, // ★ 추가
           orgName: '개인 워크스페이스',
           orgCode: `PERSONAL_${emailPrefix}`,
           role: profile?.role || 'individual',

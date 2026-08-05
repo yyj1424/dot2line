@@ -24,7 +24,14 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setError(error.message);
+      // 한국어 에러 메시지 처리
+      if (error.message.includes('Invalid login credentials')) {
+        setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+      } else if (error.message.includes('Email not confirmed')) {
+        setError('이메일 인증이 완료되지 않았습니다. 메일함을 확인해 주세요.');
+      } else {
+        setError(error.message);
+      }
       setLoading(false);
     } else {
       // 로그인 성공 시 물류 시스템 메인 대시보드로 이동
@@ -50,8 +57,18 @@ export default function LoginPage() {
               required
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">비밀번호</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-slate-300">비밀번호</label>
+              {/* 비밀번호 재설정 링크 */}
+              <Link
+                href="/reset-password"
+                className="text-xs text-indigo-400 hover:underline"
+              >
+                비밀번호를 잊으셨나요?
+              </Link>
+            </div>
             <input
               type="password"
               value={password}
@@ -62,7 +79,11 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && (
+            <p className="text-red-400 text-sm bg-red-950/50 p-3 rounded-lg border border-red-800">
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"

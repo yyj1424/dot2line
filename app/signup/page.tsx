@@ -7,6 +7,7 @@ import Link from 'next/link';
 export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [userName, setUserName] = useState('');
   
   const [groupMode, setGroupMode] = useState<'personal' | 'create' | 'join'>('personal');
@@ -15,16 +16,43 @@ export default function SignupPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSent, setIsSent] = useState(false); // 이메일 발송 완료 여부
+  const [isSent, setIsSent] = useState(false);
   const supabase = createClient();
+
+  // 비밀번호 유효성 검사 (영문 + 숫자 포함, 최소 8자)
+  const validatePassword = (pwd: string) => {
+    const hasLetter = /[a-zA-Z]/.test(pwd);
+    const hasNumber = /[0-9]/.test(pwd);
+    const isLongEnough = pwd.length >= 8;
+
+    if (!isLongEnough) return '비밀번호는 최소 8자 이상이어야 합니다.';
+    if (!hasLetter || !hasNumber) return '비밀번호는 영문과 숫자를 모두 포함해야 합니다.';
+    return null;
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    // 1. 사용자 이름 검사
     if (!userName.trim()) {
       setError('사용자 이름을 입력해 주세요.');
+      setLoading(false);
+      return;
+    }
+
+    // 2. 비밀번호 규칙 검사
+    const pwdError = validatePassword(password);
+    if (pwdError) {
+      setError(pwdError);
+      setLoading(false);
+      return;
+    }
+
+    // 3. 비밀번호 확인 일치 여부 검사
+    if (password !== confirmPassword) {
+      setError('비밀번호가 일치하지 않습니다. 다시 확인해 주세요.');
       setLoading(false);
       return;
     }
@@ -33,25 +61,51 @@ export default function SignupPage() {
     let createdOrgId: string | null = null;
 
     try {
+      // 4. 이메일 중복 체크 (profiles 테이블 조회)
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email.trim().toLowerCase())
+        .maybeSingle();
+
+      if (existingUser) {
+        throw new Error('이미 등록된 이메일(아이디)입니다. 로그인하거나 다른 이메일을 사용해 주세요.');
+      }
+
       let targetOrgId: string | null = null;
 
-      // 1. 그룹 생성 처리
+      // 5-A. 신규 그룹 생성 모드일 때 (기업명 중복 체크)
       if (groupMode === 'create') {
-        if (!orgName.trim()) throw new Error('회사/그룹명을 입력해 주세요.');
-        
+        const trimmedOrgName = orgName.trim();
+        if (!trimmedOrgName) throw new Error('회사/그룹명을 입력해 주세요.');
+
+        // 동일한 기업명이 등록되어 있는지 확인
+        const { data: existingOrg } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('org_name', trimmedOrgName)
+          .maybeSingle();
+
+        if (existingOrg) {
+          throw new Error('이미 존재하거나 가입되어 있는 기업명입니다. 다른 이름이나 [그룹 참가]를 선택해 주세요.');
+        }
+
+        // 중복이 없으면 신규 그룹 생성 (코드 생성)
         const generatedCode = 'D2L-' + Math.random().toString(36).substring(2, 8).toUpperCase();
 
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
-          .insert({ org_name: orgName, org_code: generatedCode })
+          .insert({ org_name: trimmedOrgName, org_code: generatedCode })
           .select()
           .single();
 
-        if (orgError) throw orgError;
+        if (orgError) {
+          throw new Error(`그룹 생성 실패: ${orgError.message}`);
+        }
         targetOrgId = orgData.id;
         createdOrgId = orgData.id; // 가입 실패 시 롤백용
       } 
-      // 2. 그룹 참가 처리
+      // 5-B. 기존 그룹 참가 모드일 때
       else if (groupMode === 'join') {
         if (!orgCode.trim()) throw new Error('그룹코드를 입력해 주세요.');
 
@@ -65,9 +119,9 @@ export default function SignupPage() {
         targetOrgId = orgData.id;
       }
 
-      // 3. Supabase Auth 회원가입 진행 (user_metadata 전달)
+      // 6. Supabase Auth 가입 진행
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           emailRedirectTo: `${origin}/auth/callback`,
@@ -80,25 +134,18 @@ export default function SignupPage() {
       });
 
       if (authError) {
-        // 가입 실패 시 방금 생성한 그룹이 있다면 롤백 삭제
+        // 회원가입 실패 시 방금 생성한 그룹이 있다면 삭제(롤백)
         if (createdOrgId) {
           await supabase.from('organizations').delete().eq('id', createdOrgId);
         }
         throw authError;
       }
 
-      // 가입 성공 -> 메일 발송 안내 모드로 전환
       setIsSent(true);
 
-    // catch 구문 내부
     } catch (err: any) {
-      console.error('상세 에러 내용:', {
-        message: err.message,
-        status: err.status,
-        name: err.name,
-        raw: err
-      });
-      setError(err.message || JSON.stringify(err));
+      console.error('회원가입 에러 상세:', err);
+      setError(err.message || '가입 처리 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -111,7 +158,6 @@ export default function SignupPage() {
         <p className="text-slate-400 text-center mb-6">DOT2LINE 통합 물류 시스템</p>
 
         {isSent ? (
-          /* 이메일 발송 완료 상태 화면 */
           <div className="p-6 bg-indigo-950/60 border border-indigo-500/50 rounded-xl text-center space-y-4">
             <div className="text-4xl">📩</div>
             <h3 className="text-lg font-bold text-indigo-200">인증 이메일이 발송되었습니다!</h3>
@@ -119,9 +165,6 @@ export default function SignupPage() {
               <span className="font-semibold text-white">{email}</span> 주소로 확인 링크를 보내드렸습니다.<br />
               이메일함에서 인증 링크를 클릭하신 후 로그인해 주세요.
             </p>
-            <div className="pt-2 text-xs text-slate-400">
-              * 메일이 오지 않았다면 스팸 메일함을 확인해 보세요.
-            </div>
             <Link
               href="/login"
               className="block w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-lg transition mt-4"
@@ -130,7 +173,6 @@ export default function SignupPage() {
             </Link>
           </div>
         ) : (
-          /* 회원가입 폼 */
           <form onSubmit={handleSignUp} className="space-y-4">
             {/* 계정 유형 선택 */}
             <div>
@@ -227,9 +269,27 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 required
               />
+              <p className="mt-1 text-xs text-slate-500">영문, 숫자를 포함하여 8자 이상 입력하세요.</p>
             </div>
 
-            {error && <p className="text-red-400 text-sm">{error}</p>}
+            {/* 비밀번호 확인 */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">비밀번호 확인</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none focus:border-indigo-500 text-sm"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            {error && (
+              <p className="text-red-400 text-sm bg-red-950/50 p-3 rounded-lg border border-red-800">
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"
