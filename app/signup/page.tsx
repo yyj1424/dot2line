@@ -128,7 +128,7 @@ export default function SignupPage() {
           data: {
             user_name: userName.trim(),
             org_id: targetOrgId,
-            role: groupMode === 'create' ? 'owner' : 'member',
+            role: (groupMode === 'personal' || groupMode === 'create') ? 'owner' : 'member',
           },
         },
       });
