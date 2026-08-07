@@ -119,7 +119,7 @@ export default function SignupPage() {
         targetOrgId = orgData.id;
       }
 
-      // 6. Supabase Auth 가입 진행
+     // 6. Supabase Auth 가입 진행
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -132,6 +132,24 @@ export default function SignupPage() {
           },
         },
       });
+
+      if (authError) {
+        // 회원가입 실패 시 방금 생성한 그룹이 있다면 삭제(롤백)
+        if (createdOrgId) {
+          await supabase.from('organizations').delete().eq('id', createdOrgId);
+        }
+        throw authError;
+      }
+
+      // ★ [핵심 해결 로직] 이미 등록된 이메일인 경우 identities가 [] (빈 배열)로 들어옵니다.
+      if (authData.user && authData.user.identities && authData.user.identities.length === 0) {
+        if (createdOrgId) {
+          await supabase.from('organizations').delete().eq('id', createdOrgId);
+        }
+        throw new Error('이미 등록된 이메일(아이디)입니다. 로그인하거나 다른 이메일을 사용해 주세요.');
+      }
+
+      setIsSent(true);
 
       if (authError) {
         // 회원가입 실패 시 방금 생성한 그룹이 있다면 삭제(롤백)
