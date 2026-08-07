@@ -37,10 +37,11 @@ export default function DashboardPage() {
 
     const currentUserName = orgInfo?.userName || ''; // ★ 추가
     const currentOrgCode = orgInfo?.orgCode || '';
+    const currentOrgName = orgInfo?.orgName || '';
     const currentRole = orgInfo?.role || 'member'; // ★ role 추가 (owner, admin, user 등)
 
     // ★ URL 파라미터에 userName 추가 전달
-    const targetUrl = `${springApiUrl}/sso/login?token=${encodeURIComponent(accessToken)}&userName=${encodeURIComponent(currentUserName)}&orgCode=${encodeURIComponent(currentOrgCode)}&role=${encodeURIComponent(currentRole)}&redirect=${encodeURIComponent(servicePath)}`;
+    const targetUrl = `${springApiUrl}/sso/login?token=${encodeURIComponent(accessToken)}&userName=${encodeURIComponent(currentUserName)}&orgName=${encodeURIComponent(currentOrgName)}&orgCode=${encodeURIComponent(currentOrgCode)}&role=${encodeURIComponent(currentRole)}&redirect=${encodeURIComponent(servicePath)}`;
 
     window.open(targetUrl, '_blank');
   };
