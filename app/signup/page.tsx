@@ -252,9 +252,14 @@ export default function SignupPage() {
 
             {/* 사용자 이름 */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">사용자 이름</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1">
+                사용자 이름
+              </label>
               <input
                 type="text"
+                id="userName"
+                name="name"
+                autoComplete="name"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none focus:border-indigo-500 text-sm"
@@ -263,11 +268,16 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* 이메일 */}
+            {/* 이메일 = 로그인 아이디 */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">이메일</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1">
+                이메일
+              </label>
               <input
                 type="email"
+                id="email"
+                name="username"
+                autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none focus:border-indigo-500 text-sm"
@@ -278,23 +288,32 @@ export default function SignupPage() {
 
             {/* 비밀번호 */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">비밀번호</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1">
+                비밀번호
+              </label>
               <input
                 type="password"
+                id="password"
+                name="new-password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none focus:border-indigo-500 text-sm"
                 placeholder="••••••••"
                 required
               />
-              <p className="mt-1 text-xs text-slate-500">영문, 숫자를 포함하여 8자 이상 입력하세요.</p>
             </div>
 
             {/* 비밀번호 확인 */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">비밀번호 확인</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1">
+                비밀번호 확인
+              </label>
               <input
                 type="password"
+                id="confirmPassword"
+                name="confirm-password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none focus:border-indigo-500 text-sm"
