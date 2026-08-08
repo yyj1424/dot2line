@@ -268,7 +268,7 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* 이메일 = 로그인 아이디 */}
+            {/* 이메일 - 로그인 아이디 */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">
                 이메일
@@ -276,7 +276,7 @@ export default function SignupPage() {
               <input
                 type="email"
                 id="email"
-                name="username"
+                name="email"
                 autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -294,7 +294,7 @@ export default function SignupPage() {
               <input
                 type="password"
                 id="password"
-                name="new-password"
+                name="password"
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -302,6 +302,9 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 required
               />
+              <p className="mt-1 text-xs text-slate-500">
+                영문, 숫자를 포함하여 8자 이상 입력하세요.
+              </p>
             </div>
 
             {/* 비밀번호 확인 */}
@@ -312,7 +315,7 @@ export default function SignupPage() {
               <input
                 type="password"
                 id="confirmPassword"
-                name="confirm-password"
+                name="confirmPassword"
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
