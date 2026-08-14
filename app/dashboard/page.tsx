@@ -3,10 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Box, Truck, BarChart3, Users, LogOut, ShieldCheck, Building, Copy, Check, ExternalLink } from 'lucide-react';
+import { 
+  Box, Truck, BarChart3, Users, LogOut, ShieldCheck, 
+  Building, Copy, Check, ExternalLink, LayoutDashboard, ChevronRight 
+} from 'lucide-react';
 
 interface UserOrgInfo {
-  userName: string; // ★ 추가
+  userName: string;
   orgName: string;
   orgCode: string;
   role: string;
@@ -21,9 +24,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // ★ 수정된 이벤트 핸들러: orgCode 파라미터 추가 전달
   const handleOpenSpringService = async (servicePath: string) => {
-    // 1. 현재 Supabase 세션에서 JWT Access Token을 가져옵니다.
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
@@ -35,12 +36,11 @@ export default function DashboardPage() {
     const accessToken = session.access_token;
     const springApiUrl = process.env.NEXT_PUBLIC_SPRING_API_URL || 'http://localhost:8080';
 
-    const currentUserName = orgInfo?.userName || ''; // ★ 추가
+    const currentUserName = orgInfo?.userName || '';
     const currentOrgCode = orgInfo?.orgCode || '';
     const currentOrgName = orgInfo?.orgName || '';
-    const currentRole = orgInfo?.role || 'member'; // ★ role 추가 (owner, admin, user 등)
+    const currentRole = orgInfo?.role || 'member';
 
-    // ★ URL 파라미터에 userName 추가 전달
     const targetUrl = `${springApiUrl}/sso/login?token=${encodeURIComponent(accessToken)}&userName=${encodeURIComponent(currentUserName)}&orgName=${encodeURIComponent(currentOrgName)}&orgCode=${encodeURIComponent(currentOrgCode)}&role=${encodeURIComponent(currentRole)}&redirect=${encodeURIComponent(servicePath)}`;
 
     window.open(targetUrl, '_blank');
@@ -56,7 +56,6 @@ export default function DashboardPage() {
 
       setUserEmail(user.email ?? '');
 
-      // ★ user_name 컬럼 추가 조회
       const { data: profile } = await supabase
         .from('profiles')
         .select(`
@@ -72,12 +71,11 @@ export default function DashboardPage() {
 
       const rawOrg = profile?.organizations;
       const orgData = Array.isArray(rawOrg) ? rawOrg[0] : rawOrg;
-
       const fallbackName = user.email ? user.email.split('@')[0] : '사용자';
 
       if (profile && orgData && orgData.org_code) {
         setOrgInfo({
-          userName: profile.user_name || fallbackName, // ★ 추가
+          userName: profile.user_name || fallbackName,
           orgName: orgData.org_name,
           orgCode: orgData.org_code,
           role: profile.role || 'user',
@@ -85,7 +83,7 @@ export default function DashboardPage() {
       } else {
         const emailPrefix = user.email ? user.email.split('@')[0].toUpperCase() : 'USER';
         setOrgInfo({
-          userName: profile?.user_name || fallbackName, // ★ 추가
+          userName: profile?.user_name || fallbackName,
           orgName: '개인 워크스페이스',
           orgCode: `PERSONAL_${emailPrefix}`,
           role: profile?.role || 'individual',
@@ -119,8 +117,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
-      <aside className="w-72 bg-slate-900 border-r border-slate-800 p-5 flex flex-col justify-between hidden md:flex">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row">
+      {/* ================= PC 전용 사이드바 ================= */}
+      <aside className="w-72 bg-slate-900 border-r border-slate-800 p-5 flex-col justify-between hidden md:flex">
         <div>
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
             DOT2LINE Logistics SCM
@@ -195,29 +194,110 @@ export default function DashboardPage() {
         </div>
       </aside>
 
-      <main className="flex-1 p-8 overflow-y-auto">
-        <header className="flex justify-between items-center mb-8">
+      {/* ================= 메인 본문 (모바일 & PC 공용) ================= */}
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        {/* 모바일 최상단 유저/소속 상태 카드 */}
+        <div className="md:hidden mb-6 p-4 bg-slate-900 border border-slate-800 rounded-2xl">
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center gap-2">
+              <Building size={16} className="text-indigo-400" />
+              <span className="text-xs font-bold text-slate-400">DOT2LINE SCM</span>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded-full border border-indigo-500/30 uppercase">
+              {orgInfo?.role}
+            </span>
+          </div>
+
+          <h2 className="text-xl font-extrabold text-white mb-1">
+            {orgInfo?.orgName}
+          </h2>
+          <p className="text-xs text-slate-400 truncate mb-3">{userEmail}</p>
+
+          <div className="flex items-center justify-between pt-3 border-t border-slate-800 text-xs">
+            <span className="font-mono text-slate-400">
+              코드: <strong className="text-indigo-300">{orgInfo?.orgCode}</strong>
+            </span>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 text-slate-400 hover:text-red-400 transition"
+            >
+              <LogOut size={13} />
+              <span>로그아웃</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 상단 대시보드 헤더 */}
+        <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-2xl font-bold">종합 관제 대시보드</h1>
-            <p className="text-sm text-slate-400">
+            <h1 className="text-xl md:text-2xl font-extrabold text-white">종합 관제 대시보드</h1>
+            <p className="text-xs md:text-sm text-slate-400 mt-1">
               현재 <span className="text-indigo-400 font-semibold">[{orgInfo?.orgName}]</span> 스코프에서 구동 중입니다.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 px-4 py-2 rounded-full text-indigo-400 text-sm">
-              <ShieldCheck size={16} /> 보안 세션 연결됨
+          <div className="flex items-center gap-2.5">
+            <div className="flex-1 md:flex-none flex items-center justify-center gap-1.5 bg-indigo-500/10 border border-indigo-500/30 px-3 py-2 rounded-xl text-indigo-400 text-xs md:text-sm">
+              <ShieldCheck size={15} />
+              <span>보안 세션 연결됨</span>
             </div>
 
             <button
               onClick={() => handleOpenSpringService('/index2')}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-full text-sm transition shadow-lg shadow-indigo-600/20"
+              className="flex-1 md:flex-none flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-xl text-xs md:text-sm transition shadow-lg shadow-indigo-600/20"
             >
               <span>관리시스템</span>
               <ExternalLink size={14} />
             </button>
           </div>
         </header>
+
+        {/* ★ [모바일 전용] 어플리케이션 앱 아이콘 그리드 레이아웃 */}
+        <section className="md:hidden mb-8">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1 flex items-center gap-1.5">
+            <LayoutDashboard size={14} className="text-indigo-400" />
+            <span>주요 업무 메뉴</span>
+          </h2>
+
+          <div className="grid grid-cols-2 gap-3">
+            <MobileMenuTile
+              title="기준정보 (MDM)"
+              desc="통합 코드 및 기준 관리"
+              icon={<Users className="text-sky-400" size={26} />}
+              bgClass="bg-sky-950/40 border-sky-500/30 hover:border-sky-400"
+              onClick={() => handleOpenSpringService('/mdm/main')}
+            />
+            <MobileMenuTile
+              title="창고 관리 (WMS)"
+              desc="재고 입출고 및 세이프티"
+              icon={<Box className="text-indigo-400" size={26} />}
+              bgClass="bg-indigo-950/40 border-indigo-500/30 hover:border-indigo-400"
+              onClick={() => handleOpenSpringService('/wms/main')}
+            />
+            <MobileMenuTile
+              title="수배송 (TMS)"
+              desc="차량 배차 및 물류 관제"
+              icon={<Truck className="text-emerald-400" size={26} />}
+              bgClass="bg-emerald-950/40 border-emerald-500/30 hover:border-emerald-400"
+              onClick={() => handleOpenSpringService('/tms/main')}
+            />
+            <MobileMenuTile
+              title="통합 정산"
+              desc="매출/매입 및 마감 관리"
+              icon={<BarChart3 className="text-amber-400" size={26} />}
+              bgClass="bg-amber-950/40 border-amber-500/30 hover:border-amber-400"
+              onClick={() => handleOpenSpringService('/settlement/main')}
+            />
+          </div>
+        </section>
+
+        {/* PC 화면 전용 안내 카드 (필요시 사용) */}
+        <div className="hidden md:block p-6 bg-slate-900 border border-slate-800 rounded-2xl">
+          <h3 className="text-lg font-bold text-white mb-2">물류 관제 모니터링 준비 완료</h3>
+          <p className="text-sm text-slate-400 leading-relaxed">
+            좌측 사이드바 또는 상단 관리시스템 버튼을 클릭하여 원하시는 SCM 모듈로 빠르게 이동할 수 있습니다.
+          </p>
+        </div>
       </main>
     </div>
   );
@@ -231,6 +311,28 @@ function SidebarLink({ icon, text, active = false, onClick }: { icon: React.Reac
     >
       {icon}
       {text}
+    </button>
+  );
+}
+
+{/* ★ 모바일 앱 전용 아이콘 타일 컴포넌트 */}
+function MobileMenuTile({ title, desc, icon, bgClass, onClick }: { title: string; desc: string; icon: React.ReactNode; bgClass: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col justify-between p-4 rounded-2xl border transition text-left h-36 active:scale-95 ${bgClass}`}
+    >
+      <div className="flex justify-between items-start w-full">
+        <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+          {icon}
+        </div>
+        <ChevronRight size={16} className="text-slate-500 mt-1" />
+      </div>
+
+      <div>
+        <h3 className="font-bold text-sm text-white">{title}</h3>
+        <p className="text-[11px] text-slate-400 truncate mt-0.5">{desc}</p>
+      </div>
     </button>
   );
 }
