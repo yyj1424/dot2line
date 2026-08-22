@@ -13,6 +13,9 @@ export default function SignupPage() {
   const [groupMode, setGroupMode] = useState<'personal' | 'create' | 'join'>('personal');
   const [orgName, setOrgName] = useState('');
   const [orgCode, setOrgCode] = useState('');
+  const [isClientContact, setIsClientContact] = useState(false);
+  const [clientMasterCd, setClientMasterCd] = useState('');
+  const [clientMasterNm, setClientMasterNm] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,9 +108,15 @@ export default function SignupPage() {
         targetOrgId = orgData.id;
         createdOrgId = orgData.id; // 가입 실패 시 롤백용
       } 
-      // 5-B. 기존 그룹 참가 모드일 때
+      // 5-B. 기존 그룹 참가 모드일 때 — "고객사 담당자" 체크박스가 켜져 있으면 고객사코드/고객사명도
+      // 같이 검증한다(초대 이메일에 적힌 값을 그대로 입력받는 것 — 여기선 실시간 검증 불가, transys2
+      // 쪽 T_CLIENT_MASTER는 이 프로젝트에서 조회할 수 없어서 최초 로그인 시 transys2가 검증한다).
       else if (groupMode === 'join') {
         if (!orgCode.trim()) throw new Error('그룹코드를 입력해 주세요.');
+        if (isClientContact) {
+          if (!clientMasterCd.trim()) throw new Error('고객사코드를 입력해 주세요.');
+          if (!clientMasterNm.trim()) throw new Error('고객사명을 입력해 주세요.');
+        }
 
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
@@ -119,6 +128,13 @@ export default function SignupPage() {
         targetOrgId = orgData.id;
       }
 
+      const resolvedRole =
+        groupMode === 'personal' || groupMode === 'create'
+          ? 'owner'
+          : groupMode === 'join' && isClientContact
+          ? 'client'
+          : 'member';
+
      // 6. Supabase Auth 가입 진행
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
@@ -128,7 +144,11 @@ export default function SignupPage() {
           data: {
             user_name: userName.trim(),
             org_id: targetOrgId,
-            role: (groupMode === 'personal' || groupMode === 'create') ? 'owner' : 'member',
+            role: resolvedRole,
+            ...(groupMode === 'join' && isClientContact && {
+              client_master_cd: clientMasterCd.trim(),
+              client_master_nm: clientMasterNm.trim(),
+            }),
           },
         },
       });
@@ -237,16 +257,56 @@ export default function SignupPage() {
 
             {/* 그룹 참가 선택 시 */}
             {groupMode === 'join' && (
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">그룹코드 입력</label>
-                <input
-                  type="text"
-                  value={orgCode}
-                  onChange={(e) => setOrgCode(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white uppercase outline-none focus:border-indigo-500 text-sm font-mono"
-                  placeholder="예: D2L-83A1"
-                  required
-                />
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-slate-300">그룹코드 입력</label>
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-slate-300 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isClientContact}
+                        onChange={(e) => setIsClientContact(e.target.checked)}
+                        className="accent-indigo-500"
+                      />
+                      고객 담당자
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    value={orgCode}
+                    onChange={(e) => setOrgCode(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white uppercase outline-none focus:border-indigo-500 text-sm font-mono"
+                    placeholder="예: D2L-83A1"
+                    required
+                  />
+                </div>
+
+                {isClientContact && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">고객사명</label>
+                      <input
+                        type="text"
+                        value={clientMasterNm}
+                        onChange={(e) => setClientMasterNm(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none focus:border-indigo-500 text-sm"
+                        placeholder="초대 이메일에 적힌 고객사명"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">고객사코드</label>
+                      <input
+                        type="text"
+                        value={clientMasterCd}
+                        onChange={(e) => setClientMasterCd(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none focus:border-indigo-500 text-sm font-mono"
+                        placeholder="초대 이메일에 적힌 고객사코드"
+                        required
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

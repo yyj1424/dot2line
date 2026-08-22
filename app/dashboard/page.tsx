@@ -13,6 +13,8 @@ interface UserOrgInfo {
   orgName: string;
   orgCode: string;
   role: string;
+  clientMasterCd?: string | null;
+  clientMasterNm?: string | null;
 }
 
 type TabType = 'MDM' | 'WMS' | 'TMS' | 'SETTLEMENT';
@@ -44,8 +46,12 @@ export default function DashboardPage() {
     const currentOrgCode = orgInfo?.orgCode || '';
     const currentOrgName = orgInfo?.orgName || '';
     const currentRole = orgInfo?.role || 'member';
+    const currentClientMasterCd = orgInfo?.clientMasterCd || '';
 
-    const targetUrl = `${springApiUrl}/sso/login?token=${encodeURIComponent(accessToken)}&userName=${encodeURIComponent(currentUserName)}&orgName=${encodeURIComponent(currentOrgName)}&orgCode=${encodeURIComponent(currentOrgCode)}&role=${encodeURIComponent(currentRole)}&redirect=${encodeURIComponent(servicePath)}`;
+    let targetUrl = `${springApiUrl}/sso/login?token=${encodeURIComponent(accessToken)}&userName=${encodeURIComponent(currentUserName)}&orgName=${encodeURIComponent(currentOrgName)}&orgCode=${encodeURIComponent(currentOrgCode)}&role=${encodeURIComponent(currentRole)}&redirect=${encodeURIComponent(servicePath)}`;
+    if (currentClientMasterCd) {
+      targetUrl += `&clientMasterCd=${encodeURIComponent(currentClientMasterCd)}`;
+    }
 
     window.open(targetUrl, '_blank');
   };
@@ -65,6 +71,8 @@ export default function DashboardPage() {
         .select(`
           user_name,
           role,
+          client_master_cd,
+          client_master_nm,
           organizations:org_id (
             org_name,
             org_code
@@ -83,6 +91,8 @@ export default function DashboardPage() {
           orgName: orgData.org_name,
           orgCode: orgData.org_code,
           role: profile.role || 'user',
+          clientMasterCd: profile.client_master_cd || null,
+          clientMasterNm: profile.client_master_nm || null,
         });
       } else {
         const emailPrefix = user.email ? user.email.split('@')[0].toUpperCase() : 'USER';
