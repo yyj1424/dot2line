@@ -20,7 +20,8 @@ export default function ResetPasswordPage() {
 
     // Supabase Auth 비밀번호 재설정 이메일 발송
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${origin}/update-password`, // 이메일 클릭 시 이동할 새 비밀번호 입력 페이지
+      // PKCE 인증 코드를 서버 콜백에서 세션으로 교환한 뒤 비밀번호 변경 화면으로 이동
+      redirectTo: `${origin}/auth/callback?next=/update-password`,
     });
 
     if (error) {

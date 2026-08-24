@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -11,9 +11,31 @@ export default function UpdatePasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [hasRecoverySession, setHasRecoverySession] = useState(false);
   
   const router = useRouter();
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkRecoverySession = async () => {
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      if (!mounted) return;
+
+      setHasRecoverySession(Boolean(data.session) && !sessionError);
+      if (sessionError || !data.session) {
+        setError('비밀번호 재설정 링크가 만료되었거나 올바르지 않습니다. 새 링크를 요청해 주세요.');
+      }
+      setCheckingSession(false);
+    };
+
+    void checkRecoverySession();
+    return () => {
+      mounted = false;
+    };
+  }, [supabase.auth]);
 
   // 비밀번호 유효성 검사 (영문 + 숫자 조합, 최소 8자)
   const validatePassword = (pwd: string) => {
@@ -54,6 +76,7 @@ export default function UpdatePasswordPage() {
 
       if (error) throw error;
 
+      await supabase.auth.signOut();
       setIsSuccess(true);
     } catch (err: any) {
       console.error('비밀번호 변경 실패:', err);
@@ -75,7 +98,19 @@ export default function UpdatePasswordPage() {
           새롭게 사용할 비밀번호를 입력해 주세요.
         </p>
 
-        {isSuccess ? (
+        {checkingSession ? (
+          <div className="py-8 text-center text-slate-300">재설정 링크를 확인하고 있습니다...</div>
+        ) : !hasRecoverySession ? (
+          <div className="p-6 bg-red-950/50 border border-red-800 rounded-xl text-center space-y-4">
+            <p className="text-sm text-red-300 leading-relaxed">{error}</p>
+            <Link
+              href="/reset-password"
+              className="block w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-lg transition"
+            >
+              새 재설정 링크 받기
+            </Link>
+          </div>
+        ) : isSuccess ? (
           <div className="p-6 bg-indigo-950/60 border border-indigo-500/50 rounded-xl text-center space-y-4">
             <div className="text-4xl">🎉</div>
             <h3 className="text-lg font-bold text-indigo-200">비밀번호가 변경되었습니다!</h3>
