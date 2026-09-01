@@ -30,7 +30,7 @@ export default function DashboardPage() {
   const supabase = createClient();
 
   // ★ 메인 관리시스템(Spring SSO) 이동 함수 복원
-  const handleOpenSpringService = async (servicePath: string = '/index2') => {
+  const handleOpenSpringService = async (servicePath: string = '/') => {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
@@ -202,7 +202,7 @@ export default function DashboardPage() {
         <div className="space-y-3">
           {/* PC 사이드바 하단 메인 관리시스템 가기 버튼 */}
           <button
-            onClick={() => handleOpenSpringService('/index2')}
+            onClick={() => handleOpenSpringService('/')}
             className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20"
           >
             <span>메인 시스템 접속</span>
@@ -295,7 +295,7 @@ export default function DashboardPage() {
 
             {/* ★ 모바일/PC 공용 메인 관리시스템 가기 버튼 */}
             <button
-              onClick={() => handleOpenSpringService('/index2')}
+              onClick={() => handleOpenSpringService('/')}
               className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs sm:text-sm transition shadow-lg shadow-indigo-600/20 active:scale-95 shrink-0"
             >
               <span>메인 시스템 접속</span>
