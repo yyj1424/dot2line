@@ -8,6 +8,38 @@ import {
   Building, Copy, Check, ExternalLink
 } from 'lucide-react';
 
+/** 4개 탭 공통 — 브라우저의 Supabase access token을 같은 오리진의 프록시 라우트로 넘겨서
+ * (해당 라우트가 서버사이드에서 transys2를 대신 호출) 조직 스코핑된 대시보드 데이터를 가져온다. */
+function useDashboardSummary<T>(endpoint: string) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { if (!cancelled) { setError('세션이 만료되었습니다. 다시 로그인해 주세요.'); setLoading(false); } return; }
+      try {
+        const res = await fetch(`/api/${endpoint}`, { headers: { Authorization: `Bearer ${session.access_token}` } });
+        const body = await res.json();
+        if (cancelled) return;
+        if (!res.ok) { setError(body.message || '데이터를 불러오지 못했습니다.'); setLoading(false); return; }
+        setData(body);
+      } catch {
+        if (!cancelled) setError('데이터를 불러오지 못했습니다.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endpoint]);
+
+  return { data, loading, error };
+}
+
 interface UserOrgInfo {
   userName: string;
   orgName: string;
@@ -130,6 +162,36 @@ export default function DashboardPage() {
     );
   }
 
+  // 화주사 담당자(client)는 이 4개 탭이 전부 조직 전체(다른 화주사 포함) 운영/매출 데이터라 볼 수
+  // 없다 — 서버(transys2 대시보드 API)도 동일하게 403으로 막지만, 화면 자체를 아예 다르게 보여준다.
+  if (orgInfo?.role === 'client') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-center space-y-4">
+          <Building size={28} className="mx-auto text-indigo-400" />
+          <h1 className="text-lg font-bold text-white">{orgInfo.orgName}</h1>
+          <p className="text-sm text-slate-400">
+            화주사 담당자 계정은 조직 전체 운영 현황 대시보드를 볼 수 없습니다.<br />
+            주문 조회·등록은 메인 시스템에서 이용해 주세요.
+          </p>
+          <button
+            onClick={() => handleOpenSpringService('/')}
+            className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition shadow-lg shadow-indigo-600/20"
+          >
+            <span>메인 시스템 접속</span>
+            <ExternalLink size={14} />
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full py-2 bg-slate-800/80 hover:bg-red-950/40 hover:text-red-400 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5"
+          >
+            <LogOut size={13} /> 로그아웃
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row antialiased">
       {/* ================= PC 전용 사이드바 ================= */}
@@ -190,12 +252,14 @@ export default function DashboardPage() {
               active={activeTab === 'TMS'} 
               onClick={() => setActiveTab('TMS')} 
             />
-            <SidebarTabBtn 
-              icon={<BarChart3 size={18} />} 
-              text="통합 정산 시스템" 
-              active={activeTab === 'SETTLEMENT'} 
-              onClick={() => setActiveTab('SETTLEMENT')} 
-            />
+            {orgInfo?.role !== 'client' && (
+              <SidebarTabBtn
+                icon={<BarChart3 size={18} />}
+                text="통합 정산 시스템"
+                active={activeTab === 'SETTLEMENT'}
+                onClick={() => setActiveTab('SETTLEMENT')}
+              />
+            )}
           </nav>
         </div>
 
@@ -265,12 +329,14 @@ export default function DashboardPage() {
             icon={<Truck size={15} />}
             onClick={() => setActiveTab('TMS')}
           />
-          <MobileTabButton
-            active={activeTab === 'SETTLEMENT'}
-            label="통합 정산"
-            icon={<BarChart3 size={15} />}
-            onClick={() => setActiveTab('SETTLEMENT')}
-          />
+          {orgInfo?.role !== 'client' && (
+            <MobileTabButton
+              active={activeTab === 'SETTLEMENT'}
+              label="통합 정산"
+              icon={<BarChart3 size={15} />}
+              onClick={() => setActiveTab('SETTLEMENT')}
+            />
+          )}
         </div>
 
         {/* 상단 타이틀 및 메인 시스템 바로가기 버튼 헤더 */}
@@ -357,14 +423,30 @@ function MobileTabButton({
 }
 
 /* ================== 1. 기준정보 (MDM) 현황 ================== */
+interface MdmRecentRow { kind: string; label: string; sub: string; status: string }
+interface MdmSummary {
+  clientTotal: number; clientShipperCount: number; clientVendorCount: number;
+  centerTotal: number; centerMainCount: number; centerSubCount: number; centerPointCount: number;
+  carTotal: number; carDeliveryCount: number; carTransportCount: number;
+  productCount: number; productNewThisWeekCount: number;
+  recentList: MdmRecentRow[];
+}
+const MDM_KIND_BADGE: Record<string, string> = {
+  '거래처': 'bg-blue-500/10 text-blue-400', '차량': 'bg-emerald-500/10 text-emerald-400', '센터': 'bg-purple-500/10 text-purple-400',
+};
+
 function MdmView() {
+  const { data, loading, error } = useDashboardSummary<MdmSummary>('mdm-summary');
+  if (loading) return <ViewLoading label="기준정보 데이터 불러오는 중..." />;
+  if (error || !data) return <ViewError message={error} />;
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <SummaryCard title="등록 거래처" value="142 개사" sub="매출처 89 / 매입처 53" color="indigo" />
-        <SummaryCard title="물류 거점 센터" value="8 개소" sub="수도권 5 / 영남 3" color="sky" />
-        <SummaryCard title="등록 수송 차량" value="64 대" sub="지입 42 / 직영 22" color="emerald" />
-        <SummaryCard title="품목 마스터(SKU)" value="3,210 종" sub="금주 신규 +14" color="purple" />
+        <SummaryCard title="등록 거래처" value={`${data.clientTotal} 개사`} sub={`화주사 ${data.clientShipperCount} / 매입처 ${data.clientVendorCount}`} color="indigo" />
+        <SummaryCard title="물류 거점 센터" value={`${data.centerTotal} 개소`} sub={`메인 ${data.centerMainCount} / 서브 ${data.centerSubCount} / 착지 ${data.centerPointCount}`} color="sky" />
+        <SummaryCard title="등록 차량" value={`${data.carTotal} 대`} sub={`배송용 ${data.carDeliveryCount} / 수송용 ${data.carTransportCount}`} color="emerald" />
+        <SummaryCard title="품목 마스터(SKU)" value={`${data.productCount} 종`} sub={`금주 신규 +${data.productNewThisWeekCount}`} color="purple" />
       </div>
 
       <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 sm:p-5">
@@ -375,29 +457,22 @@ function MdmView() {
               <tr>
                 <th className="py-2 font-medium">구분</th>
                 <th className="py-2 font-medium">코드 / 명칭</th>
-                <th className="py-2 font-medium hidden sm:table-cell">관리센터</th>
+                <th className="py-2 font-medium hidden sm:table-cell">비고</th>
                 <th className="py-2 font-medium">상태</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              <tr>
-                <td className="py-2.5"><span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">거래처</span></td>
-                <td className="py-2.5 font-medium text-white">CLNT-092 (주)대한유통</td>
-                <td className="py-2.5 text-slate-400 hidden sm:table-cell">이천 메인센터</td>
-                <td className="py-2.5 text-emerald-400">정상 사용</td>
-              </tr>
-              <tr>
-                <td className="py-2.5"><span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px]">차량</span></td>
-                <td className="py-2.5 font-medium text-white">경기 85바 1234 (11t 윙바디)</td>
-                <td className="py-2.5 text-slate-400 hidden sm:table-cell">평택 저온센터</td>
-                <td className="py-2.5 text-emerald-400">배차 가능</td>
-              </tr>
-              <tr>
-                <td className="py-2.5"><span className="px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 text-[10px]">센터</span></td>
-                <td className="py-2.5 font-medium text-white">CTR-008 용인 물류센터</td>
-                <td className="py-2.5 text-slate-400 hidden sm:table-cell">용인센터</td>
-                <td className="py-2.5 text-amber-400">오픈 준비중</td>
-              </tr>
+              {data.recentList.length === 0 && (
+                <tr><td colSpan={4} className="py-6 text-center text-slate-500">등록된 기준정보가 없습니다.</td></tr>
+              )}
+              {data.recentList.map((row, i) => (
+                <tr key={i}>
+                  <td className="py-2.5"><span className={`px-1.5 py-0.5 rounded text-[10px] ${MDM_KIND_BADGE[row.kind] || 'bg-slate-700/40 text-slate-300'}`}>{row.kind}</span></td>
+                  <td className="py-2.5 font-medium text-white">{row.label}</td>
+                  <td className="py-2.5 text-slate-400 hidden sm:table-cell">{row.sub}</td>
+                  <td className={`py-2.5 ${row.status.includes('삭제') ? 'text-red-400' : row.status.includes('미사용') ? 'text-amber-400' : 'text-emerald-400'}`}>{row.status}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -407,22 +482,36 @@ function MdmView() {
 }
 
 /* ================== 2. 창고 관리 (WMS) 현황 ================== */
+interface WmsCenterRow { centerCd: string; centerNm: string; usableCount: number; usedCount: number; inboundCount: number; outboundCount: number; rate: number }
+interface WmsSummary {
+  storageRate: number; usableLocationCount: number; usedLocationCount: number;
+  todayInboundTotal: number; todayInboundDone: number;
+  todayOutboundTotal: number; todayOutboundDone: number;
+  stockAnomalyCount: number;
+  centers: WmsCenterRow[];
+}
+
 function WmsView() {
+  const { data, loading, error } = useDashboardSummary<WmsSummary>('wms-summary');
+  if (loading) return <ViewLoading label="창고 데이터 불러오는 중..." />;
+  if (error || !data) return <ViewError message={error} />;
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <SummaryCard title="현재 창고 보관율" value="84.2 %" sub="총 12,000 PLT 중 10,104 PLT" color="indigo" />
-        <SummaryCard title="금일 입고 (예정/완료)" value="18 / 12 건" sub="입고율 66.7%" color="emerald" />
-        <SummaryCard title="금일 출고 (예정/완료)" value="45 / 38 건" sub="출고율 84.4%" color="amber" />
-        <SummaryCard title="재고 불일치/이상" value="0 건" sub="정상 보관 중" color="sky" />
+        <SummaryCard title="로케이션 사용률" value={`${data.storageRate} %`} sub={`총 ${data.usableLocationCount}개 중 ${data.usedLocationCount}개 사용중`} color="indigo" />
+        <SummaryCard title="금일 입고 (완료/전체)" value={`${data.todayInboundDone} / ${data.todayInboundTotal} 건`} sub="입고예정 기준" color="emerald" />
+        <SummaryCard title="금일 출고 (완료/전체)" value={`${data.todayOutboundDone} / ${data.todayOutboundTotal} 건`} sub="출고예정 기준" color="amber" />
+        <SummaryCard title="재고 이상" value={`${data.stockAnomalyCount} 건`} sub={data.stockAnomalyCount === 0 ? '정상 보관 중' : '가용재고 음수 발생'} color="sky" />
       </div>
 
       <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 sm:p-5">
         <h3 className="text-sm font-bold text-slate-200 mb-3">거점 센터별 보관 및 입출고</h3>
         <div className="space-y-3">
-          <WarehouseProgress center="이천 제1 메인센터" rate={88} inbound={8} outbound={20} />
-          <WarehouseProgress center="평택 저온 물류센터" rate={92} inbound={4} outbound={12} />
-          <WarehouseProgress center="칠곡 영남 물류센터" rate={65} inbound={6} outbound={6} />
+          {data.centers.length === 0 && <p className="text-xs text-slate-500 py-4 text-center">WMS를 사용하는 센터가 없습니다.</p>}
+          {data.centers.map((c) => (
+            <WarehouseProgress key={c.centerCd} center={c.centerNm} rate={c.rate} inbound={c.inboundCount} outbound={c.outboundCount} />
+          ))}
         </div>
       </div>
     </div>
@@ -430,18 +519,38 @@ function WmsView() {
 }
 
 /* ================== 3. 수배송 관리 (TMS) 현황 ================== */
+interface TmsDispatchRow {
+  seq: number; orderDt: string; carNo: string; driverNm: string; fromCenterNm: string; toCenterNm: string;
+  confirmYn: string; saleConfirmYn: string; buyConfirmYn: string;
+}
+interface TmsSummary {
+  todayDispatchCount: number; monthDispatchCount: number;
+  totalCarCount: number; activeCarCount: number; activeCarRate: number;
+  recentDispatches: TmsDispatchRow[];
+}
+
+function dispatchStatusLabel(row: TmsDispatchRow): { text: string; className: string } {
+  if (row.confirmYn === 'Y') return { text: '정산 확정', className: 'text-emerald-400' };
+  if (row.saleConfirmYn === 'Y' || row.buyConfirmYn === 'Y') return { text: '부분 확정', className: 'text-sky-400' };
+  return { text: '확정 대기', className: 'text-amber-400' };
+}
+
 function TmsView() {
+  const { data, loading, error } = useDashboardSummary<TmsSummary>('tms-summary');
+  if (loading) return <ViewLoading label="배차 데이터 불러오는 중..." />;
+  if (error || !data) return <ViewError message={error} />;
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <SummaryCard title="금일 배차 완료율" value="98.5 %" sub="65건 중 64건 배차" color="emerald" />
-        <SummaryCard title="운행 중 차량" value="28 대" sub="GPS 관제 연결" color="sky" />
-        <SummaryCard title="배송 완료 보고" value="34 건" sub="진행률 53%" color="indigo" />
-        <SummaryCard title="지연 징후 차량" value="1 건" sub="정체 구간 감지" color="amber" />
+        <SummaryCard title="금일 배차 등록" value={`${data.todayDispatchCount} 건`} sub="오늘 등록된 배차" color="emerald" />
+        <SummaryCard title="이번달 누적 배차" value={`${data.monthDispatchCount} 건`} sub="이번 달 전체" color="indigo" />
+        <SummaryCard title="차량 가동률" value={`${data.activeCarRate} %`} sub={`등록 ${data.totalCarCount}대 중 ${data.activeCarCount}대 가동`} color="sky" />
+        <SummaryCard title="미가동 차량" value={`${Math.max(data.totalCarCount - data.activeCarCount, 0)} 대`} sub="이번 달 배차 이력 없음" color="amber" />
       </div>
 
       <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 sm:p-5">
-        <h3 className="text-sm font-bold text-slate-200 mb-3">실시간 배차 및 운행 관제</h3>
+        <h3 className="text-sm font-bold text-slate-200 mb-3">최근 배차 현황</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead className="text-slate-400 border-b border-slate-800 pb-2">
@@ -453,18 +562,20 @@ function TmsView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              <tr>
-                <td className="py-2.5 font-mono text-indigo-300">TMS-2608-0041</td>
-                <td className="py-2.5 font-medium text-white">서울 80아 5678 (이운송)</td>
-                <td className="py-2.5 text-slate-300">이천센터 ➔ 강남 물류거점</td>
-                <td className="py-2.5 text-sky-400">운행 중 (도착 15:40)</td>
-              </tr>
-              <tr>
-                <td className="py-2.5 font-mono text-indigo-300">TMS-2608-0042</td>
-                <td className="py-2.5 font-medium text-white">경기 91바 9988 (박기사)</td>
-                <td className="py-2.5 text-slate-300">평택센터 ➔ 대전 물류허브</td>
-                <td className="py-2.5 text-emerald-400">배송 완료 (14:15)</td>
-              </tr>
+              {data.recentDispatches.length === 0 && (
+                <tr><td colSpan={4} className="py-6 text-center text-slate-500">최근 배차 내역이 없습니다.</td></tr>
+              )}
+              {data.recentDispatches.map((row) => {
+                const s = dispatchStatusLabel(row);
+                return (
+                  <tr key={row.seq}>
+                    <td className="py-2.5 font-mono text-indigo-300">DS-{row.seq}</td>
+                    <td className="py-2.5 font-medium text-white">{row.carNo} {row.driverNm ? `(${row.driverNm})` : ''}</td>
+                    <td className="py-2.5 text-slate-300">{row.fromCenterNm} ➔ {row.toCenterNm}</td>
+                    <td className={`py-2.5 ${s.className}`}>{s.text}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -473,19 +584,65 @@ function TmsView() {
   );
 }
 
+function ViewLoading({ label }: { label: string }) {
+  return <div className="text-sm text-slate-400 py-10 text-center">{label}</div>;
+}
+function ViewError({ message }: { message?: string | null }) {
+  return <div className="text-sm text-red-400 py-10 text-center">{message || '데이터를 불러오지 못했습니다.'}</div>;
+}
+
 /* ================== 4. 통합 정산 현황 ================== */
+interface SettlementLedgerRow {
+  type: 'BILLING' | 'PAYOUT';
+  no: string;
+  periodFrom: string;
+  periodTo: string;
+  targetName: string;
+  amount: number;
+  status: string;
+}
+
+interface SettlementSummary {
+  monthlyBillingTotal: number;
+  monthlyPayoutTotal: number;
+  closingRate: number;
+  closingConfirmedCount: number;
+  closingTotalCount: number;
+  pendingCount: number;
+  recentSettlements: SettlementLedgerRow[];
+}
+
+const SETTLEMENT_STATUS_NM: Record<string, string> = {
+  DRAFT: '작성중', CONFIRMED: '확정', SENT: '발송완료', PAID: '지급완료', CANCELLED: '취소',
+};
+
+function formatWon(n: number) {
+  return '₩ ' + Math.round(n).toLocaleString();
+}
+
+function periodLabel(from: string, to: string) {
+  const f = (from || '').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+  const t = (to || '').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+  return from === to ? f : `${f} ~ ${t}`;
+}
+
 function SettlementView() {
+  const { data: summary, loading, error } = useDashboardSummary<SettlementSummary>('settlement-summary');
+
+  if (loading) return <ViewLoading label="정산 데이터 불러오는 중..." />;
+  if (error || !summary) return <ViewError message={error} />;
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <SummaryCard title="당월 매출 집계" value="₩ 148.5 M" sub="전월 대비 +12%" color="indigo" />
-        <SummaryCard title="당월 운송 매입" value="₩ 92.4 M" sub="지입/용차 운임 합산" color="purple" />
-        <SummaryCard title="마감 완료율" value="82 %" sub="142개사 중 116개 확정" color="emerald" />
-        <SummaryCard title="검증요청 건" value="3 건" sub="차액 확인 필요" color="amber" />
+        <SummaryCard title="당월 매출 집계" value={formatWon(summary.monthlyBillingTotal)} sub="청구 원장 합계(취소 제외)" color="indigo" />
+        <SummaryCard title="당월 운송 매입" value={formatWon(summary.monthlyPayoutTotal)} sub="수송 매입처 지급 원장 합계" color="purple" />
+        <SummaryCard title="마감 완료율" value={`${summary.closingRate} %`} sub={`이번 달 대상 ${summary.closingTotalCount}건 중 ${summary.closingConfirmedCount}건 확정`} color="emerald" />
+        <SummaryCard title="미청구/미정산 대기" value={`${summary.pendingCount} 건`} sub="아직 청구서·정산서로 안 묶인 원장" color="amber" />
       </div>
 
       <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 sm:p-5">
-        <h3 className="text-sm font-bold text-slate-200 mb-3">최근 정산 마감 및 세금계산서 발행</h3>
+        <h3 className="text-sm font-bold text-slate-200 mb-3">최근 청구서 · 지급 정산서</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead className="text-slate-400 border-b border-slate-800 pb-2">
@@ -497,18 +654,19 @@ function SettlementView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              <tr>
-                <td className="py-2.5 font-mono text-slate-400">2026-08 (1차)</td>
-                <td className="py-2.5 font-medium text-white">(주)동아물류 (매출)</td>
-                <td className="py-2.5 font-mono text-emerald-400">₩ 24,500,000</td>
-                <td className="py-2.5 text-emerald-400">발행 완료</td>
-              </tr>
-              <tr>
-                <td className="py-2.5 font-mono text-slate-400">2026-08 (1차)</td>
-                <td className="py-2.5 font-medium text-white">경인로지스 협동조합 (매입)</td>
-                <td className="py-2.5 font-mono text-slate-300">₩ 18,200,000</td>
-                <td className="py-2.5 text-amber-400">검증 대기</td>
-              </tr>
+              {summary.recentSettlements.length === 0 && (
+                <tr><td colSpan={4} className="py-6 text-center text-slate-500">최근 청구서/정산서 내역이 없습니다.</td></tr>
+              )}
+              {summary.recentSettlements.map((row) => (
+                <tr key={row.type + row.no}>
+                  <td className="py-2.5 font-mono text-slate-400">{periodLabel(row.periodFrom, row.periodTo)}</td>
+                  <td className="py-2.5 font-medium text-white">{row.targetName} ({row.type === 'BILLING' ? '매출' : '매입'})</td>
+                  <td className={`py-2.5 font-mono ${row.type === 'BILLING' ? 'text-emerald-400' : 'text-slate-300'}`}>{formatWon(row.amount)}</td>
+                  <td className={`py-2.5 ${row.status === 'CANCELLED' ? 'text-red-400' : row.status === 'DRAFT' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                    {SETTLEMENT_STATUS_NM[row.status] || row.status}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
