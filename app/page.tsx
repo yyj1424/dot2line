@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Box, Truck, BarChart3, Users, ShieldCheck, Lock, KeyRound } from 'lucide-react';
+import { ArrowRight, Box, Truck, BarChart3, Users, ShieldCheck, Lock, KeyRound, Smartphone, PackageSearch, ClipboardCheck } from 'lucide-react';
 
 export default function LandingPage() {
   return (
@@ -84,6 +84,35 @@ export default function LandingPage() {
             icon={<Truck className="text-cyan-400" size={24} />}
             title="수송/배송 관리 (TMS)"
             desc="최적의 배차 경로와 실시간 GPS 관제로 배송 효율을 극대화합니다."
+          />
+        </div>
+      </section>
+
+      {/* 4.1 현장용 모바일 앱 (Mobile Apps) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
+        <div className="text-center mb-8 sm:mb-10">
+          <div className="inline-flex items-center gap-1.5 mb-4 px-3 py-1 border border-slate-800 rounded-full bg-slate-900/60 text-slate-400 text-xs sm:text-sm font-medium">
+            <Smartphone size={14} />
+            관리자 화면뿐만 아니라
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 break-keep">현장 인력도 전용 앱으로 연결됩니다</h2>
+          <p className="text-slate-400 text-sm sm:text-base break-keep">수송·배송 기사부터 창고 작업자까지, 각자의 업무에 맞춘 모바일 앱을 제공합니다.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <FeatureCard
+            icon={<Truck className="text-indigo-400" size={24} />}
+            title="수송 기사 앱"
+            desc="배차 목록과 상·하차지 정보를 확인하고, 입차부터 수송완료까지 단계별로 처리합니다. 실시간 위치 전송으로 도착 여부를 자동 확인합니다."
+          />
+          <FeatureCard
+            icon={<PackageSearch className="text-purple-400" size={24} />}
+            title="배송 기사 앱"
+            desc="오늘의 배송 목록과 상차 스캔, 배송완료·연기·취소·반품회수까지 현장에서 바로 처리합니다."
+          />
+          <FeatureCard
+            icon={<ClipboardCheck className="text-cyan-400" size={24} />}
+            title="창고 작업자 앱(WMS)"
+            desc="입고·피킹·출고 작업 지시를 스캔 기반으로 확인하고 처리 결과를 실시간으로 반영합니다."
           />
         </div>
       </section>
