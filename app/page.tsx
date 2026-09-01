@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Box, Truck, BarChart3, Users } from 'lucide-react';
+import { ArrowRight, Box, Truck, BarChart3, Users, ShieldCheck, Lock, KeyRound } from 'lucide-react';
 
 export default function LandingPage() {
   return (
@@ -57,27 +57,15 @@ export default function LandingPage() {
             >
               무료로 사용해 보기 <ArrowRight size={18} />
             </Link>
-            <button 
-              type="button"
-              className="w-full sm:w-auto px-7 py-3.5 border border-slate-700 hover:bg-slate-900 rounded-full font-bold text-base sm:text-lg transition active:scale-95 text-slate-300 hover:text-white"
+            <a
+              href="#faq"
+              className="w-full sm:w-auto px-7 py-3.5 border border-slate-700 hover:bg-slate-900 rounded-full font-bold text-base sm:text-lg transition active:scale-95 text-slate-300 hover:text-white text-center"
             >
-              솔루션 소개서 받기
-            </button>
+              더 알아보기
+            </a>
           </div>
         </div>
       </header>
-
-      {/* 3. 광고 섹션 (상단) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-2">
-        <div className="w-full p-4 sm:p-5 bg-slate-900/60 border border-slate-800 rounded-xl flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 group cursor-pointer hover:border-indigo-500/40 transition text-center sm:text-left">
-          <span className="text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded text-[10px] sm:text-xs uppercase tracking-widest font-semibold">
-            AD
-          </span>
-          <p className="text-slate-300 text-xs sm:text-sm font-medium break-keep">
-            물류 보험의 새로운 혁신, 지금 가입하고 첫 달 무료 혜택을 받으세요
-          </p>
-        </div>
-      </section>
 
       {/* 4. 핵심 기능 (Features) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
@@ -100,6 +88,53 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* 4.2 보안 (Security) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 sm:p-10">
+          <div className="flex items-center gap-2 mb-8 sm:mb-10 justify-center">
+            <ShieldCheck className="text-emerald-400" size={22} />
+            <h2 className="text-xl sm:text-2xl font-bold break-keep">안심하고 맡기셔도 됩니다</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            <SecurityItem
+              icon={<Lock className="text-emerald-400" size={20} />}
+              title="개인정보 암호화 저장"
+              desc="연락처, 주소 등 개인정보는 암호화된 상태로 저장되어 원본 데이터가 그대로 노출되지 않습니다."
+            />
+            <SecurityItem
+              icon={<KeyRound className="text-emerald-400" size={20} />}
+              title="회사별 데이터 완전 분리"
+              desc="조직 단위로 데이터가 분리되어 저장되며, 다른 회사는 서로의 데이터를 조회할 수 없습니다."
+            />
+            <SecurityItem
+              icon={<ShieldCheck className="text-emerald-400" size={20} />}
+              title="화면·기능별 권한 관리"
+              desc="담당자 역할에 따라 조회·저장·삭제 권한을 세밀하게 설정할 수 있습니다."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 4.5 제품 미리보기 (Preview) */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
+        <div className="text-center mb-8 sm:mb-10">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 break-keep">실제로 이렇게 동작합니다</h2>
+          <p className="text-slate-400 text-sm sm:text-base break-keep">배차부터 창고 재고까지, 한 화면에서 관리하는 실제 운영 콘솔입니다.</p>
+        </div>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-2xl shadow-black/40">
+          <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-800 bg-slate-900/80">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+            <span className="ml-3 text-[11px] text-slate-500 font-mono">app.dot2line.co.kr</span>
+          </div>
+          <div className="aspect-video flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-600">
+            <BarChart3 size={40} className="text-slate-700" />
+            <p className="text-xs sm:text-sm text-slate-500">실제 운영 화면 스크린샷 예정</p>
+          </div>
+        </div>
+      </section>
+
       {/* 5. 무료 제공 선언 (Free Policy) */}
       <section className="bg-gradient-to-b from-indigo-600 to-indigo-700 py-16 sm:py-20 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto text-center">
@@ -119,18 +154,30 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 6. 광고 섹션 (하단) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 text-center">
-        <div className="w-full max-w-3xl mx-auto p-6 sm:p-10 bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl">
-          <span className="text-[10px] sm:text-xs text-slate-500 block mb-2 font-mono tracking-wider">
-            SPONSORED
-          </span>
-          <h3 className="text-base sm:text-xl font-bold text-slate-200 break-keep">
-            물류 창고 공실 해결을 위한 가장 빠른 방법
-          </h3>
-          <p className="text-slate-400 text-xs sm:text-sm mt-2 break-keep">
-            지금 바로 물류창고 임대 정보 서비스를 무료로 확인해 보세요.
-          </p>
+      {/* 5.5 자주 묻는 질문 (FAQ) */}
+      <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 scroll-mt-20">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-8 sm:mb-10 text-center break-keep">자주 묻는 질문</h2>
+        <div className="flex flex-col gap-4">
+          <FaqItem
+            q="지금 어떤 업무까지 지원하나요?"
+            a="주문/기준정보 관리, 배차·배송 계획, 창고 입출고 및 재고 관리(WMS)까지 실제 운영 중인 기능입니다. 계속 기능이 추가되고 있습니다."
+          />
+          <FaqItem
+            q="도입까지 얼마나 걸리나요?"
+            a="별도 설치 없이 가입 즉시 웹에서 바로 사용할 수 있습니다. 초기 셋팅은 기존에 쓰시던 엑셀 기준정보를 그대로 업로드하는 방식으로 지원해 빠르게 시작하실 수 있습니다."
+          />
+          <FaqItem
+            q="기존에 쓰던 시스템과 연동할 수 있나요?"
+            a="API 연동을 지원합니다. 기존 ERP·주문 시스템과 데이터를 주고받아 이중 입력 없이 연결할 수 있습니다."
+          />
+          <FaqItem
+            q="우리 회사 데이터는 안전한가요?"
+            a="회사(조직)별로 데이터가 분리되어 저장되어 다른 조직에서는 조회할 수 없고, 개인정보는 암호화된 상태로 저장됩니다."
+          />
+          <FaqItem
+            q="더 자세히 상담받고 싶어요."
+            a="가입 후 도입 문의를 남겨주시면 담당자가 확인 후 연락드립니다."
+          />
         </div>
       </section>
 
@@ -145,6 +192,30 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function SecurityItem({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <div className="flex flex-col items-center text-center gap-3">
+      <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+        {icon}
+      </div>
+      <h3 className="text-sm sm:text-base font-bold text-slate-100 break-keep">{title}</h3>
+      <p className="text-xs sm:text-sm text-slate-400 leading-relaxed break-keep">{desc}</p>
+    </div>
+  );
+}
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  return (
+    <details className="group p-5 sm:p-6 bg-slate-900/40 border border-slate-800/80 rounded-2xl open:border-indigo-500/40 transition">
+      <summary className="flex items-center justify-between cursor-pointer list-none font-semibold text-sm sm:text-base text-slate-100 break-keep">
+        {q}
+        <span className="ml-4 shrink-0 text-slate-500 group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+      </summary>
+      <p className="mt-3 text-xs sm:text-sm text-slate-400 leading-relaxed break-keep">{a}</p>
+    </details>
   );
 }
 
