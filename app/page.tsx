@@ -1,8 +1,30 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 import { ArrowRight, Box, Truck, BarChart3, Users, ShieldCheck, Lock, KeyRound, Smartphone, PackageSearch, ClipboardCheck } from 'lucide-react';
 
 export default function LandingPage() {
+  const [checkingSession, setCheckingSession] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        router.replace('/dashboard');
+      } else {
+        setCheckingSession(false);
+      }
+    });
+  }, [router]);
+
+  if (checkingSession) {
+    return <div className="min-h-screen bg-slate-950" />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white antialiased">
       {/* 1. 네비게이션 */}
@@ -20,14 +42,14 @@ export default function LandingPage() {
             </Link>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            <Link 
-              href="/login" 
+            <Link
+              href="/login"
               className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium hover:text-indigo-400 transition"
             >
               로그인
             </Link>
-            <Link 
-              href="/signup" 
+            <Link
+              href="/signup"
               className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium bg-indigo-600 hover:bg-indigo-700 rounded-lg transition whitespace-nowrap shadow-sm shadow-indigo-500/20"
             >
               무료로 시작하기
