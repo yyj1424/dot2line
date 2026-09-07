@@ -8,8 +8,16 @@ export default function LandingPage() {
       {/* 1. 네비게이션 */}
       <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-            DOT2LINE
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+              DOT2LINE
+            </div>
+            <Link
+              href="/apk"
+              className="px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-300 border border-slate-700 hover:border-indigo-500/50 hover:text-indigo-400 rounded-lg transition whitespace-nowrap"
+            >
+              앱 다운로드
+            </Link>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <Link 
@@ -34,7 +42,7 @@ export default function LandingPage() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[600px] h-[320px] sm:h-[600px] bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 mb-6 border border-indigo-500/30 rounded-full bg-indigo-500/10 text-indigo-400 text-xs sm:text-sm font-medium break-keep">
+          <div className="inline-block px-4 py-1.5 sm:px-5 sm:py-2 mb-6 border border-indigo-500/30 rounded-full bg-indigo-500/10 text-indigo-400 text-sm sm:text-base font-medium break-keep">
             로지스틱스의 새로운 기준, 2026 물류 트렌드
           </div>
           
