@@ -1,6 +1,8 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { Truck, PackageSearch, Warehouse, Download, ArrowLeft } from 'lucide-react';
+import { Truck, PackageSearch, Warehouse, Download, ArrowLeft, Copy, Check } from 'lucide-react';
 
 const APPS = [
   {
@@ -27,6 +29,14 @@ const APPS = [
 ];
 
 export default function ApkDownloadPage() {
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleCopy = (key: string, url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 2000);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white antialiased">
       <nav className="w-full border-b border-slate-800">
@@ -54,24 +64,36 @@ export default function ApkDownloadPage() {
         <div className="grid gap-4 sm:gap-6">
           {APPS.map((app) => {
             const Icon = app.icon;
+            const copied = copiedKey === app.key;
             return (
               <div
                 key={app.key}
-                className="flex items-center gap-4 sm:gap-6 p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl"
+                className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl"
               >
-                <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-                  <Icon size={26} />
+                <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
+                  <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                    <Icon size={26} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-base sm:text-lg font-bold">{app.name}</h2>
+                    <p className="text-xs sm:text-sm text-slate-400 break-keep">{app.desc}</p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-base sm:text-lg font-bold">{app.name}</h2>
-                  <p className="text-xs sm:text-sm text-slate-400 break-keep">{app.desc}</p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleCopy(app.key, app.url)}
+                    className="flex items-center gap-1.5 px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg font-medium text-xs sm:text-sm transition active:scale-95 whitespace-nowrap"
+                  >
+                    {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                    {copied ? '복사됨' : '경로복사'}
+                  </button>
+                  <a
+                    href={app.url}
+                    className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold text-xs sm:text-sm transition active:scale-95 whitespace-nowrap"
+                  >
+                    <Download size={16} /> 다운로드
+                  </a>
                 </div>
-                <a
-                  href={app.url}
-                  className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold text-xs sm:text-sm transition active:scale-95 whitespace-nowrap"
-                >
-                  <Download size={16} /> 다운로드
-                </a>
               </div>
             );
           })}

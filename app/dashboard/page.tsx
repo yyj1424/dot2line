@@ -3,9 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import { 
-  Box, Truck, BarChart3, Users, LogOut, ShieldCheck, 
-  Building, Copy, Check, ExternalLink
+import {
+  Box, Truck, BarChart3, Users, LogOut, ShieldCheck,
+  Building, Copy, Check, ExternalLink, Download
 } from 'lucide-react';
 
 /** 4개 탭 공통 — 브라우저의 Supabase access token을 같은 오리진의 프록시 라우트로 넘겨서
@@ -261,6 +261,13 @@ export default function DashboardPage() {
               />
             )}
           </nav>
+
+          <button
+            onClick={() => router.push('/apk')}
+            className="w-full mt-3 flex items-center justify-center gap-1.5 py-2 bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs font-medium transition"
+          >
+            <Download size={13} /> 앱 다운로드
+          </button>
         </div>
 
         <div className="space-y-3">
@@ -338,6 +345,13 @@ export default function DashboardPage() {
             />
           )}
         </div>
+
+        <button
+          onClick={() => router.push('/apk')}
+          className="w-full flex items-center justify-center gap-1.5 py-2.5 mb-6 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition md:hidden"
+        >
+          <Download size={14} /> 앱 다운로드
+        </button>
 
         {/* 상단 타이틀 및 메인 시스템 바로가기 버튼 헤더 */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800/80">
