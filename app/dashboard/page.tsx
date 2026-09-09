@@ -399,7 +399,7 @@ function SidebarTabBtn({ icon, text, active, onClick }: { icon: React.ReactNode;
   return (
     <button 
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition ${
+      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition ${
         active ? 'bg-indigo-600 text-white font-semibold shadow-sm' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
       }`}
     >
@@ -424,7 +424,7 @@ function MobileTabButton({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold transition active:scale-95 ${
+      className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition active:scale-95 ${
         active
           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
           : 'bg-slate-900/90 border border-slate-800 text-slate-400 hover:text-slate-200'
