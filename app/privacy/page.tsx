@@ -4,14 +4,6 @@ export const metadata = {
   title: '개인정보처리방침 | DOT2LINE',
 };
 
-function TodoBadge({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-block px-1.5 py-0.5 mx-0.5 rounded bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[13px] font-medium align-middle">
-      {children}
-    </span>
-  );
-}
-
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-300">
@@ -22,19 +14,17 @@ export default function PrivacyPolicyPage() {
 
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-50 mt-6 mb-2">개인정보처리방침</h1>
         <p className="text-sm text-slate-500 mb-10">
-          시행일: <TodoBadge>YYYY-MM-DD 입력 필요</TodoBadge>
+          시행일: 2026-09-10
         </p>
 
         <div className="mb-10 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-sm text-amber-200 leading-relaxed">
-          이 문서는 표준 개인정보처리방침 양식을 바탕으로 작성된 초안입니다.{' '}
-          <TodoBadge>노란색으로 표시된 항목</TodoBadge>은 실제 사업자 정보로 반드시 교체해야 하며,
-          정식 서비스 오픈 전 법률 검토를 받는 것을 권장합니다.
+          이 문서는 표준 개인정보처리방침 양식을 바탕으로 작성되었습니다. 정식 서비스 오픈 전 법률 검토를 받는 것을 권장합니다.
         </div>
 
         <div className="space-y-10 text-sm leading-relaxed [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-slate-50 [&_h2]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-2 [&_table]:w-full [&_table]:text-xs [&_table]:border-collapse [&_th]:text-left [&_th]:font-semibold [&_th]:text-slate-300 [&_th]:border-b [&_th]:border-slate-800 [&_th]:py-2 [&_td]:border-b [&_td]:border-slate-900 [&_td]:py-2 [&_td]:text-slate-400">
           <section>
             <p>
-              <TodoBadge>회사명(상호)</TodoBadge>(이하 &ldquo;회사&rdquo;)는 「개인정보 보호법」 등 관련 법령에 따라 이용자의
+              dot2line(이하 &ldquo;회사&rdquo;)는 「개인정보 보호법」 등 관련 법령에 따라 이용자의
               개인정보를 보호하고, 이와 관련한 고충을 신속하게 처리할 수 있도록 다음과 같이 개인정보처리방침을 수립·공개합니다.
             </p>
           </section>
@@ -76,7 +66,29 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2>2. 개인정보의 수집 및 이용 목적</h2>
+            <h2>2. 위치정보의 수집·이용·제공</h2>
+            <p className="mb-3">
+              회사는 배송기사용·수송기사용 모바일 앱(dot2line 배송, dot2line 수송)에서 배차·배송 진행 현황을
+              실시간으로 확인하고 안내하기 위해 위치정보를 수집합니다.
+            </p>
+            <ul className="mt-3">
+              <li>수집 항목: 위치정보(위도·경도)</li>
+              <li>수집 대상: 배송기사 앱, 수송기사 앱을 이용하는 기사 회원</li>
+              <li>
+                수집 방법: 앱 최초 실행 시 위치정보 이용에 대한 동의를 받으며, 동의 후 운행 중 앱이 포그라운드
+                서비스(화면 상단 알림으로 위치 전송 중임을 상시 표시)를 통해 일정 주기로 위치정보를 전송합니다.
+              </li>
+              <li>이용 목적: 배차 배정, 배송·운행 진행상황 실시간 추적, 화주사·관제 담당자에 대한 배송현황 안내</li>
+              <li>보유 및 이용 기간: 운행 종료 후 즉시 파기하며, 배차·정산 내역 확인 등의 목적으로 최대 30일간 보관 후 파기합니다.</li>
+              <li>
+                기사 회원은 운행 종료 후 앱 내 설정 또는 단말기 설정에서 위치정보 수집 동의를 언제든 철회할 수
+                있으며, 이 경우 배차·배송 진행상황 실시간 안내 등 위치기반 서비스 이용이 제한될 수 있습니다.
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>3. 개인정보의 수집 및 이용 목적</h2>
             <ul>
               <li>회원 가입 의사 확인, 본인 식별·인증, 회원자격 유지·관리</li>
               <li>주문·배차·배송·창고관리 등 서비스 제공 및 계약 이행</li>
@@ -86,13 +98,13 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2>3. 개인정보의 보유 및 이용기간</h2>
+            <h2>4. 개인정보의 보유 및 이용기간</h2>
             <p>
               회사는 원칙적으로 개인정보 수집 및 이용목적이 달성된 후에는 해당 정보를 지체 없이 파기합니다. 다만,
               회원 탈퇴 시에도 관계 법령에 따라 일정 기간 보존이 필요한 경우 아래와 같이 보존합니다.
             </p>
             <ul className="mt-3">
-              <li>회원 정보: 회원 탈퇴 시까지 (탈퇴 후 <TodoBadge>보존기간 입력</TodoBadge> 보관 후 파기)</li>
+              <li>회원 정보: 회원 탈퇴 시까지 (탈퇴 후 부정이용 방지를 위해 30일간 보관 후 파기)</li>
               <li>
                 전자상거래 등에서의 소비자보호에 관한 법률에 따른 계약/청약철회, 대금결제, 재화 등의 공급기록: 5년
               </li>
@@ -101,16 +113,16 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2>4. 개인정보의 제3자 제공</h2>
+            <h2>5. 개인정보의 제3자 제공</h2>
             <p>
-              회사는 이용자의 개인정보를 &ldquo;2. 수집 및 이용 목적&rdquo;에 명시한 범위 내에서만 처리하며, 이용자의
+              회사는 이용자의 개인정보를 &ldquo;3. 수집 및 이용 목적&rdquo;에 명시한 범위 내에서만 처리하며, 이용자의
               사전 동의 없이는 동 범위를 초과하여 제3자에게 제공하지 않습니다. 다만, 법령에 특별한 규정이 있는
               경우는 예외로 합니다.
             </p>
           </section>
 
           <section>
-            <h2>5. 개인정보처리의 위탁</h2>
+            <h2>6. 개인정보처리의 위탁</h2>
             <p className="mb-3">회사는 서비스 제공을 위해 아래와 같이 개인정보 처리업무를 위탁하고 있습니다.</p>
             <table>
               <thead>
@@ -125,7 +137,7 @@ export default function PrivacyPolicyPage() {
                   <td>회원 인증(로그인) 및 계정 정보 저장</td>
                 </tr>
                 <tr>
-                  <td><TodoBadge>호스팅사 입력</TodoBadge></td>
+                  <td>Vercel Inc.</td>
                   <td>서비스 운영을 위한 서버 호스팅</td>
                 </tr>
               </tbody>
@@ -133,7 +145,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2>6. 이용자 및 법정대리인의 권리와 행사방법</h2>
+            <h2>7. 이용자 및 법정대리인의 권리와 행사방법</h2>
             <p>
               이용자는 언제든지 등록되어 있는 자신의 개인정보를 조회하거나 수정할 수 있으며, 가입 해지(회원 탈퇴)를
               요청할 수 있습니다. 개인정보 조회, 수정, 삭제를 원하시는 경우 아래 개인정보보호책임자에게 서면,
@@ -142,7 +154,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2>7. 개인정보의 안전성 확보조치</h2>
+            <h2>8. 개인정보의 안전성 확보조치</h2>
             <p className="mb-3">회사는 개인정보 보호를 위해 다음과 같은 조치를 취하고 있습니다.</p>
             <ul>
               <li>개인정보 암호화: 연락처, 주소 등 개인정보는 암호화하여 저장·관리합니다.</li>
@@ -153,7 +165,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2>8. 쿠키의 운영 및 거부</h2>
+            <h2>9. 쿠키의 운영 및 거부</h2>
             <p>
               회사는 이용자에게 개인화되고 맞춤화된 서비스를 제공하기 위해 로그인 상태 유지 등의 목적으로
               쿠키(cookie)를 사용할 수 있습니다. 이용자는 브라우저 설정을 통해 쿠키 저장을 거부할 수 있으며, 이
@@ -162,20 +174,19 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2>9. 개인정보보호책임자</h2>
+            <h2>10. 개인정보보호책임자</h2>
             <p className="mb-3">
               회사는 개인정보 처리에 관한 업무를 총괄해서 책임지고, 개인정보 처리와 관련한 이용자의 불만처리 및
               피해구제 등을 위하여 아래와 같이 개인정보보호책임자를 지정하고 있습니다.
             </p>
             <ul>
-              <li>성명: <TodoBadge>입력 필요</TodoBadge></li>
-              <li>연락처: <TodoBadge>입력 필요</TodoBadge></li>
-              <li>이메일: <TodoBadge>입력 필요</TodoBadge></li>
+              <li>성명: dot2line 운영자</li>
+              <li>이메일: dot2line.admin@gmail.com</li>
             </ul>
           </section>
 
           <section>
-            <h2>10. 개인정보처리방침의 변경</h2>
+            <h2>11. 개인정보처리방침의 변경</h2>
             <p>
               이 개인정보처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이
               있는 경우에는 변경사항의 시행 7일 전부터 홈페이지 공지사항을 통하여 고지합니다.
