@@ -1,10 +1,29 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { ArrowRight, Box, Truck, BarChart3, Users, ShieldCheck, Lock, KeyRound, Smartphone, PackageSearch, ClipboardCheck } from 'lucide-react';
+import { ArrowRight, Box, Truck, Users, ShieldCheck, Lock, KeyRound, Smartphone, PackageSearch, ClipboardCheck } from 'lucide-react';
+
+type PreviewScreen = {
+  label: string;
+  shape: 'desktop' | 'mobile';
+  image?: string;
+  alt?: string;
+  icon?: React.ReactNode;
+};
+
+const previewScreens: PreviewScreen[] = [
+  { label: 'TMS · 운송 경로', shape: 'desktop', image: '/screenshots/tms-route.png', alt: '운송 단가 및 최단 경로 화면 — 실제 지도 기반 경로와 예상 소요시간을 계산합니다' },
+  { label: 'WMS · 출고요청', shape: 'desktop', image: '/screenshots/wms-outbound.png', alt: '출고요청 관리 화면 — 등록 경로별 출고 요청과 상품별 처리 현황을 관리합니다' },
+  { label: '배송 기사 앱', shape: 'mobile', image: '/screenshots/app-delivery.webp', alt: '배송 기사 앱 홈 화면 — 메시지 확인, 배송하기, 배송예약잡기, 일반배송, 반품(회수)처리를 한 화면에서 처리합니다' },
+  { label: 'TMS · 배송 CAPA', shape: 'desktop', image: '/screenshots/delivery-capa.png', alt: '배송 CAPA 관리 화면 — 센터·권역별 배송 캐파 설정과 일자별 배차 현황을 관리합니다' },
+  { label: '통합정산 · 매출 종합원장', shape: 'desktop', image: '/screenshots/settlement-ledger.png', alt: '매출 종합원장 화면 — 화주사별 배송·수송 정산 원장을 한 화면에서 조회하고 청구/취소 반영까지 처리합니다' },
+  { label: '수송 기사 앱', shape: 'mobile', image: '/screenshots/app-trans.webp', alt: '수송 기사 앱 홈 화면 — 오늘의 운행 목록과 배차 확인 대기 상태를 보여줍니다' },
+  { label: '창고 작업자 앱', shape: 'mobile', image: '/screenshots/app-wms.webp', alt: '창고 작업자 앱 홈 화면 — 입고검수, 적치, 재고이동, 보충, 피킹, 소분 처리 등 현장 작업 메뉴를 스캔 기반으로 제공합니다' },
+];
 
 export default function LandingPage() {
   const [checkingSession, setCheckingSession] = useState(true);
@@ -65,19 +84,19 @@ export default function LandingPage() {
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="inline-block px-4 py-1.5 sm:px-5 sm:py-2 mb-6 border border-indigo-500/30 rounded-full bg-indigo-500/10 text-indigo-400 text-sm sm:text-base font-medium break-keep">
-            로지스틱스의 새로운 기준, 2026 물류 트렌드
+            AI로 개발 · Private AI 연계
           </div>
-          
+
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6 leading-tight sm:leading-tight break-keep">
-            흩어진 점들을 연결하여<br />
+            AI로 개발하고,<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400">
-              물류의 선형적 가치
-            </span>를 만듭니다
+              Private AI
+            </span>로 연결합니다
           </h1>
-          
+
           <p className="text-sm sm:text-lg md:text-xl text-slate-400 mb-8 max-w-2xl mx-auto leading-relaxed break-keep px-2">
-            기준정보(MDM)부터 창고(WMS), 배송(TMS), 정산까지.<br className="hidden sm:inline" />
-            데이터의 끊김 없는 흐름으로 귀사의 물류를 혁신하세요.
+            설계부터 개발까지 AI가 함께 만든 물류 시스템입니다.<br className="hidden sm:inline" />
+            소중한 물류 데이터는 외부 공개 AI가 아닌, 귀사만을 위한 Private AI와 안전하게 연동됩니다.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
@@ -174,22 +193,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 4.5 제품 미리보기 (Preview) */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
-        <div className="text-center mb-8 sm:mb-10">
+      {/* 4.5 제품 미리보기 (Preview) — 실제 화면을 무한 스크롤 마퀴로 흘려서 보여준다 */}
+      <section className="pb-16 sm:pb-24">
+        <div className="text-center mb-8 sm:mb-10 px-4 sm:px-6">
           <h2 className="text-2xl sm:text-3xl font-bold mb-3 break-keep">실제로 이렇게 동작합니다</h2>
-          <p className="text-slate-400 text-sm sm:text-base break-keep">배차부터 창고 재고까지, 한 화면에서 관리하는 실제 운영 콘솔입니다.</p>
+          <p className="text-slate-400 text-sm sm:text-base break-keep">배차부터 창고 재고, 정산, 현장 모바일 앱까지 — 실제 운영 화면입니다.</p>
         </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-2xl shadow-black/40">
-          <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-800 bg-slate-900/80">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
-            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
-            <span className="ml-3 text-[11px] text-slate-500 font-mono">app.dot2line.co.kr</span>
-          </div>
-          <div className="aspect-video flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-600">
-            <BarChart3 size={40} className="text-slate-700" />
-            <p className="text-xs sm:text-sm text-slate-500">실제 운영 화면 스크린샷 예정</p>
+        <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+          <div className="marquee-track flex items-center w-max gap-5 px-4">
+            {[...previewScreens, ...previewScreens].map((screen, i) => (
+              <PreviewCard key={i} {...screen} />
+            ))}
           </div>
         </div>
       </section>
@@ -250,6 +264,49 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function PreviewCard({ label, shape, image, alt, icon }: PreviewScreen) {
+  if (shape === 'mobile') {
+    return (
+      <div className="w-[170px] sm:w-[200px] shrink-0 rounded-[1.75rem] border border-slate-800 bg-slate-900/60 overflow-hidden shadow-xl shadow-black/30">
+        <div className="flex items-center justify-center gap-1 px-3 py-2 border-b border-slate-800 bg-slate-900/80">
+          <span className="w-12 h-1.5 rounded-full bg-slate-700" />
+        </div>
+        <div className="relative aspect-[923/2000] bg-slate-950">
+          {image ? (
+            <Image src={image} alt={alt ?? label} fill sizes="(max-width: 640px) 170px, 200px" className="object-cover object-top" />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-600 px-3 text-center">
+              {icon}
+              <p className="text-xs text-slate-500 break-keep">{label} · 촬영 예정</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-[300px] sm:w-[380px] shrink-0 rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-xl shadow-black/30">
+      <div className="flex items-center gap-1.5 px-3.5 py-2.5 border-b border-slate-800 bg-slate-900/80">
+        <span className="w-2 h-2 rounded-full bg-red-500/70" />
+        <span className="w-2 h-2 rounded-full bg-yellow-500/70" />
+        <span className="w-2 h-2 rounded-full bg-green-500/70" />
+        <span className="ml-2 text-[11px] text-slate-500 font-mono truncate">{label}</span>
+      </div>
+      <div className="relative aspect-[16/10] bg-slate-950">
+        {image ? (
+          <Image src={image} alt={alt ?? label} fill sizes="(max-width: 640px) 300px, 380px" className="object-cover object-top" />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-600">
+            {icon}
+            <p className="text-xs text-slate-500">{label} · 촬영 예정</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
