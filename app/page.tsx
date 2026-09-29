@@ -84,19 +84,19 @@ export default function LandingPage() {
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="inline-block px-4 py-1.5 sm:px-5 sm:py-2 mb-6 border border-indigo-500/30 rounded-full bg-indigo-500/10 text-indigo-400 text-sm sm:text-base font-medium break-keep">
-            AI로 개발 · Private AI 연계
+            AI로 만들고 · AI와 함께하는 물류 ERP
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6 leading-tight sm:leading-tight break-keep">
-            AI로 개발하고,<br />
+            AI로 만들고,<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400">
-              Private AI
-            </span>로 연결합니다
+              AI
+            </span>와 함께하는 시스템
           </h1>
 
           <p className="text-sm sm:text-lg md:text-xl text-slate-400 mb-8 max-w-2xl mx-auto leading-relaxed break-keep px-2">
-            설계부터 개발까지 AI가 함께 만든 물류 시스템입니다.<br className="hidden sm:inline" />
-            소중한 물류 데이터는 외부 공개 AI가 아닌, 귀사만을 위한 Private AI와 안전하게 연동됩니다.
+            점(dot)들이 모여 하나의 선(line)을 이루듯, 흩어진 물류 정보가 모여 업무의 흐름을 만드는 통합 물류 ERP입니다.<br className="hidden sm:inline" />
+            설계부터 개발까지 AI와 함께 만들었고, 배차·재고관리·정산 같은 현장 업무에도 AI가 함께합니다.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
