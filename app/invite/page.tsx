@@ -1,208 +1,123 @@
 'use client';
 
-import { Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { Truck, PackageSearch, Warehouse, Download, ArrowLeft, Copy, Check, ExternalLink } from 'lucide-react';
 
-/**
- * 고객사 담당자 전용 가입 화면 — 일반 회원가입 화면(/signup)과 달리 링크에 없다("숨어있는" 화면,
- * [사용자 확정 2026-08-22]). transys2의 "고객사 담당자 초대" 메일이 그룹코드/고객사코드/고객사명/
- * 이메일/사용자명을 쿼리스트링으로 실어서 이 페이지 링크를 보내주고, 담당자는 비밀번호만 입력하면
- * 가입이 끝난다 — 나머지 정보는 전부 읽기 전용으로 보여주기만 한다.
- */
-export default function InvitePage() {
-  return (
-    <Suspense fallback={null}>
-      <InviteSignupForm />
-    </Suspense>
-  );
-}
+const APPS = [
+  {
+    key: 'delivery',
+    name: 'D2L 배송',
+    desc: '배송 기사용 앱 — 배송 목록, 상차/완료 처리, 실시간 위치 전송',
+    icon: Truck,
+    url: 'https://app.dot2line.co.kr/apk/dot2line-delivery.apk',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.dot2line.delivery',
+  },
+  {
+    key: 'trans',
+    name: 'D2L 수송',
+    desc: '수송(B2B) 기사용 앱 — 수송 진행 상황 처리, 실시간 위치 전송',
+    icon: PackageSearch,
+    url: 'https://app.dot2line.co.kr/apk/dot2line-trans.apk',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.dot2line.trans',
+  },
+  {
+    key: 'wms',
+    name: 'D2L 창고',
+    desc: '창고 작업자용 앱 — 입출고 검수, 피킹, 재고 처리',
+    icon: Warehouse,
+    url: 'https://app.dot2line.co.kr/apk/dot2line-wms.apk',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.dot2line.wms',
+  },
+];
 
-function InviteSignupForm() {
-  const searchParams = useSearchParams();
-  const orgCode = searchParams.get('orgCode') || '';
-  const clientMasterCd = searchParams.get('clientMasterCd') || '';
-  const clientMasterNm = searchParams.get('clientMasterNm') || '';
-  const email = searchParams.get('email') || '';
-  const userName = searchParams.get('userName') || '';
+export default function ApkDownloadPage() {
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isSent, setIsSent] = useState(false);
-  const supabase = createClient();
-
-  const missingParams = !orgCode || !clientMasterCd || !email || !userName;
-
-  const validatePassword = (pwd: string) => {
-    const hasLetter = /[a-zA-Z]/.test(pwd);
-    const hasNumber = /[0-9]/.test(pwd);
-    const isLongEnough = pwd.length >= 8;
-
-    if (!isLongEnough) return '비밀번호는 최소 8자 이상이어야 합니다.';
-    if (!hasLetter || !hasNumber) return '비밀번호는 영문과 숫자를 모두 포함해야 합니다.';
-    return null;
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const pwdError = validatePassword(password);
-    if (pwdError) {
-      setError(pwdError);
-      setLoading(false);
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다. 다시 확인해 주세요.');
-      setLoading(false);
-      return;
-    }
-
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-
-    try {
-      const { data: existingUser } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email.trim().toLowerCase())
-        .maybeSingle();
-
-      if (existingUser) {
-        throw new Error('이미 등록된 이메일(아이디)입니다. 로그인해 주세요.');
-      }
-
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('org_code', orgCode.trim().toUpperCase())
-        .single();
-
-      if (orgError || !orgData) {
-        throw new Error('초대 링크의 그룹코드를 확인할 수 없습니다. 초대 메일을 다시 보내달라고 요청해 주세요.');
-      }
-
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: `${origin}/auth/callback`,
-          data: {
-            user_name: userName.trim(),
-            org_id: orgData.id,
-            role: 'client',
-            client_master_cd: clientMasterCd.trim(),
-            client_master_nm: clientMasterNm.trim(),
-          },
-        },
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user && authData.user.identities && authData.user.identities.length === 0) {
-        throw new Error('이미 등록된 이메일(아이디)입니다. 로그인해 주세요.');
-      }
-
-      setIsSent(true);
-    } catch (err: any) {
-      console.error('고객사 담당자 가입 에러 상세:', err);
-      setError(err.message || '가입 처리 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
+  const handleCopy = (key: string, url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 2000);
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-6 text-slate-100 py-12">
-      <div className="max-w-md w-full bg-slate-900 border border-slate-800 p-8 rounded-2xl">
-        <h2 className="text-3xl font-bold text-white mb-2 text-center">고객사 담당자 가입</h2>
-        <p className="text-slate-400 text-center mb-6">DOT2LINE 통합 물류 시스템</p>
+    <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white antialiased">
+      <nav className="w-full border-b border-slate-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+            DOT2LINE
+          </Link>
+          <Link href="/" className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-indigo-400 transition">
+            <ArrowLeft size={16} /> 홈으로
+          </Link>
+        </div>
+      </nav>
 
-        {missingParams ? (
-          <p className="text-red-400 text-sm bg-red-950/50 p-4 rounded-lg border border-red-800 text-center">
-            잘못된 초대 링크입니다. 초대 메일의 링크를 다시 확인하시거나, 담당자에게 재발송을 요청해 주세요.
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-24">
+        <div className="text-center mb-12">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-4 break-keep">
+            앱 다운로드
+          </h1>
+          <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto break-keep">
+            안드로이드 기기에서 Play 스토어(테스트 버전)로 이동하거나, APK 파일을 직접 내려받아 설치해 주세요.
           </p>
-        ) : isSent ? (
-          <div className="p-6 bg-indigo-950/60 border border-indigo-500/50 rounded-xl text-center space-y-4">
-            <div className="text-4xl">📩</div>
-            <h3 className="text-lg font-bold text-indigo-200">인증 이메일이 발송되었습니다!</h3>
-            <p className="text-sm text-indigo-300/80 leading-relaxed">
-              <span className="font-semibold text-white">{email}</span> 주소로 확인 링크를 보내드렸습니다.<br />
-              이메일함에서 인증 링크를 클릭하신 후 로그인해 주세요.
-            </p>
-            <Link
-              href="/login"
-              className="block w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-lg transition mt-4"
-            >
-              로그인 페이지로 이동
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSignUp} className="space-y-4">
-            <div className="p-4 bg-slate-800/60 border border-slate-700 rounded-lg space-y-2">
-              <InfoRow label="이름" value={userName} />
-              <InfoRow label="이메일" value={email} />
-              <InfoRow label="소속 고객사" value={clientMasterNm} />
-            </div>
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">비밀번호</label>
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none focus:border-indigo-500 text-sm"
-                placeholder="••••••••"
-                required
-              />
-              <p className="mt-1 text-xs text-slate-500">
-                영문, 숫자를 포함하여 8자 이상 입력하세요.
-              </p>
-            </div>
+        <div className="grid gap-4 sm:gap-6">
+          {APPS.map((app) => {
+            const Icon = app.icon;
+            const copied = copiedKey === app.key;
+            return (
+              <div
+                key={app.key}
+                className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl"
+              >
+                <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
+                  <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                    <Icon size={26} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-base sm:text-lg font-bold">{app.name}</h2>
+                    <p className="text-xs sm:text-sm text-slate-400 break-keep">{app.desc}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleCopy(app.key, app.url)}
+                    className="flex items-center gap-1.5 px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg font-medium text-xs sm:text-sm transition active:scale-95 whitespace-nowrap"
+                  >
+                    {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                    {copied ? '복사됨' : '경로복사'}
+                  </button>
+                  <a
+                    href={app.url}
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 rounded-lg font-semibold text-xs sm:text-sm transition active:scale-95 whitespace-nowrap"
+                  >
+                    <Download size={16} /> APK 다운로드
+                  </a>
+                  {app.playStoreUrl && (
+                    <a
+                      href={app.playStoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs sm:text-sm transition active:scale-95 whitespace-nowrap"
+                    >
+                      <ExternalLink size={16} /> Play 스토어
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">비밀번호 확인</label>
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none focus:border-indigo-500 text-sm"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            {error && (
-              <p className="text-red-400 text-sm bg-red-950/50 p-3 rounded-lg border border-red-800">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition disabled:opacity-50 mt-2"
-            >
-              {loading ? '처리 중...' : '가입 완료'}
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-slate-400">{label}</span>
-      <span className="font-medium text-white">{value}</span>
+        <div className="mt-10 p-4 sm:p-5 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+          <p className="text-xs sm:text-sm text-amber-200/80 break-keep">
+            이미 앱이 설치되어 있는 경우, 새 버전 설치 전에 <strong>기존 앱을 삭제</strong>해야 할 수 있습니다.
+            삭제 후 재설치하더라도 로그인 정보만 다시 입력하면 되고, 다른 데이터는 영향받지 않습니다.
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

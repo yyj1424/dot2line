@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Truck, PackageSearch, Warehouse, Download, ArrowLeft, Copy, Check } from 'lucide-react';
+import { Truck, PackageSearch, Warehouse, Download, ArrowLeft, Copy, Check, ExternalLink } from 'lucide-react';
 
 const APPS = [
   {
@@ -11,6 +11,7 @@ const APPS = [
     desc: '배송 기사용 앱 — 배송 목록, 상차/완료 처리, 실시간 위치 전송',
     icon: Truck,
     url: 'https://app.dot2line.co.kr/apk/dot2line-delivery.apk',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.dot2line.delivery',
   },
   {
     key: 'trans',
@@ -18,6 +19,7 @@ const APPS = [
     desc: '수송(B2B) 기사용 앱 — 수송 진행 상황 처리, 실시간 위치 전송',
     icon: PackageSearch,
     url: 'https://app.dot2line.co.kr/apk/dot2line-trans.apk',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.dot2line.trans',
   },
   {
     key: 'wms',
@@ -25,6 +27,7 @@ const APPS = [
     desc: '창고 작업자용 앱 — 입출고 검수, 피킹, 재고 처리',
     icon: Warehouse,
     url: 'https://app.dot2line.co.kr/apk/dot2line-wms.apk',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.dot2line.wms',
   },
 ];
 
@@ -56,8 +59,7 @@ export default function ApkDownloadPage() {
             앱 다운로드
           </h1>
           <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto break-keep">
-            안드로이드 기기에서 아래 버튼을 눌러 APK 파일을 내려받은 뒤 설치해 주세요.
-            Play 스토어 정식 출시 전까지는 이 페이지를 통해 최신 버전을 받으실 수 있습니다.
+            안드로이드 기기에서 Play 스토어(테스트 버전)로 이동하거나, APK 파일을 직접 내려받아 설치해 주세요.
           </p>
         </div>
 
@@ -79,7 +81,7 @@ export default function ApkDownloadPage() {
                     <p className="text-xs sm:text-sm text-slate-400 break-keep">{app.desc}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
                   <button
                     onClick={() => handleCopy(app.key, app.url)}
                     className="flex items-center gap-1.5 px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg font-medium text-xs sm:text-sm transition active:scale-95 whitespace-nowrap"
@@ -89,10 +91,20 @@ export default function ApkDownloadPage() {
                   </button>
                   <a
                     href={app.url}
-                    className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold text-xs sm:text-sm transition active:scale-95 whitespace-nowrap"
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 rounded-lg font-semibold text-xs sm:text-sm transition active:scale-95 whitespace-nowrap"
                   >
-                    <Download size={16} /> 다운로드
+                    <Download size={16} /> APK 다운로드
                   </a>
+                  {app.playStoreUrl && (
+                    <a
+                      href={app.playStoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs sm:text-sm transition active:scale-95 whitespace-nowrap"
+                    >
+                      <ExternalLink size={16} /> Play 스토어
+                    </a>
+                  )}
                 </div>
               </div>
             );
