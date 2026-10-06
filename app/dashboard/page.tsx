@@ -3,9 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import ClientDashboardView from './ClientDashboardView';
 import {
   Box, Truck, BarChart3, Users, LogOut, ShieldCheck,
-  Building, Copy, Check, ExternalLink, Download
+  Building, Copy, Check, ExternalLink, Download,
+  Calendar, Layers, AlertCircle, CheckCircle2, Search, ArrowRight
 } from 'lucide-react';
 
 /** 4개 탭 공통 — 브라우저의 Supabase access token을 같은 오리진의 프록시 라우트로 넘겨서
@@ -703,157 +705,6 @@ function WarehouseProgress({ center, rate, inbound, outbound }: { center: string
         <span>입고 대기/처리: <strong className="text-emerald-400">{inbound}건</strong></span>
         <span>출고 대기/처리: <strong className="text-amber-400">{outbound}건</strong></span>
       </div>
-    </div>
-  );
-}
-
-/* ================== 화주사 전용 대시보드 컴포넌트 (ClientDashboardView) ================== */
-interface ClientOrderRow {
-  orderNo: string;
-  consigneeNm: string;
-  deliveryDt: string;
-  statusNm: string;
-  status: string;
-  trackToken: string;
-}
-
-function ClientDashboardView({
-  orgInfo,
-  userEmail,
-  onOpenSpring,
-  onLogout,
-}: {
-  orgInfo: any;
-  userEmail: string | null;
-  onOpenSpring: (p: string) => void;
-  onLogout: () => void;
-}) {
-  const router = useRouter();
-
-  // 화주사용 실시간 위탁 물류 현황
-  const [orders] = useState<ClientOrderRow[]>([
-    { orderNo: 'ORD-20261007-0012', consigneeNm: '홍*동', deliveryDt: '2026-10-07', status: '7000', statusNm: '배송중', trackToken: 'DEV_ORG01_10521' },
-    { orderNo: 'ORD-20261007-0011', consigneeNm: '김*수', deliveryDt: '2026-10-07', status: '9999', statusNm: '배송완료', trackToken: 'DEV_ORG01_10520' },
-    { orderNo: 'ORD-20261007-0010', consigneeNm: '이*진', deliveryDt: '2026-10-07', status: '9999', statusNm: '배송완료', trackToken: 'DEV_ORG01_10519' },
-    { orderNo: 'ORD-20261007-0009', consigneeNm: '박*훈', deliveryDt: '2026-10-06', status: '9999', statusNm: '배송완료', trackToken: 'DEV_ORG01_10518' },
-  ]);
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased">
-      {/* 화주사 상단 네비게이션 */}
-      <nav className="w-full bg-slate-900/80 border-b border-slate-800 px-4 sm:px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-            DOT2LINE
-          </span>
-          <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold">
-            화주사 B2B 콘솔
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-slate-400 hidden sm:inline">{userEmail}</span>
-          <button
-            onClick={onLogout}
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-red-400 transition"
-          >
-            <LogOut size={13} /> 로그아웃
-          </button>
-        </div>
-      </nav>
-
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 md:p-8 space-y-6">
-        {/* 화주사 헤더 & 퀵 액션 */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-800/80">
-          <div>
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              위탁사: {orgInfo?.orgName}
-            </span>
-            <h1 className="text-xl sm:text-2xl font-bold text-white mt-1">
-              {orgInfo?.clientMasterNm || '화주사'} 물류 운영 현황
-            </h1>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              onClick={() => onOpenSpring('/ApiPortal')}
-              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition"
-            >
-              API 연동키 관리
-            </button>
-            <button
-              onClick={() => onOpenSpring('/')}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2 rounded-xl text-xs sm:text-sm transition shadow-lg shadow-indigo-600/20 active:scale-95"
-            >
-              <span>주문 대량 등록</span>
-              <ExternalLink size={13} />
-            </button>
-          </div>
-        </div>
-
-        {/* 4대 핵심 지표 카드 */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <SummaryCard title="당월 누적 주문" value="142 건" sub="이번 달 위탁 접수" color="indigo" />
-          <SummaryCard title="현재 실시간 배송중" value="8 건" sub="기사 운행 중" color="amber" />
-          <SummaryCard title="배송 완료 (금월)" value="134 건" sub="정시 배송률 98.5%" color="emerald" />
-          <SummaryCard title="위탁 보관 SKU" value="24 종" sub="이천/용인 센터 가용" color="purple" />
-        </div>
-
-        {/* 최근 주문 목록 & 원클릭 실시간 배송 추적 */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-              <Truck size={16} className="text-indigo-400" /> 최근 위탁 배송 목록
-            </h3>
-            <button
-              onClick={() => router.push('/track')}
-              className="text-xs text-indigo-400 hover:underline"
-            >
-              전체 주문 검색 →
-            </button>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="text-slate-400 border-b border-slate-800 pb-2">
-                <tr>
-                  <th className="py-2.5 font-medium">주문번호</th>
-                  <th className="py-2.5 font-medium">수취인</th>
-                  <th className="py-2.5 font-medium">배송일자</th>
-                  <th className="py-2.5 font-medium">상태</th>
-                  <th className="py-2.5 font-medium text-right">실시간 관제</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                {orders.map((ord) => (
-                  <tr key={ord.orderNo}>
-                    <td className="py-3 font-mono text-indigo-300">{ord.orderNo}</td>
-                    <td className="py-3 font-medium text-white">{ord.consigneeNm}</td>
-                    <td className="py-3 text-slate-400">{ord.deliveryDt}</td>
-                    <td className="py-3">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                          ord.status === '9999'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                        }`}
-                      >
-                        {ord.statusNm}
-                      </span>
-                    </td>
-                    <td className="py-3 text-right">
-                      <button
-                        onClick={() => router.push(`/track/${ord.trackToken}`)}
-                        className="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs font-semibold transition active:scale-95"
-                      >
-                        실시간 추적
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </main>
     </div>
   );
 }
