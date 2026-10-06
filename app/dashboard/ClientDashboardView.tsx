@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Truck, LogOut, ExternalLink, Calendar, Layers,
-  CheckCircle2, Search, FileText, Download, AlertTriangle
+  CheckCircle2, Search, FileText, Download, AlertTriangle, Sparkles
 } from 'lucide-react';
 
 interface UserOrgInfo {
@@ -144,6 +144,13 @@ export default function ClientDashboardView({
             </h1>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => router.push('/control-tower')}
+              className="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-500/20 active:scale-95"
+            >
+              <Sparkles size={13} />
+              <span>AI 관제 타워 (3D)</span>
+            </button>
             <button
               onClick={() => onOpenSpring('/ApiPortal')}
               className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition"
