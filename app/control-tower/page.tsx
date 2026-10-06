@@ -8,11 +8,11 @@ import {
   AlertTriangle, ArrowRight, RefreshCw, Eye, Play, Pause,
   RotateCw, ZoomIn, ZoomOut, CheckCircle2, ChevronRight,
   Layers, MapPin, Gauge, Activity, Radio, Cpu, Send,
-  Sliders, ArrowUpRight
+  Sliders, ArrowUpRight, Warehouse, Route, Check, Zap
 } from 'lucide-react';
 
 /* =========================================================================
-   1. 3D 디지털 트윈 트럭 적재 시뮬레이터 (HTML5 Canvas 3D Engine)
+   1. 3D 디지털 트윈 화물 적재 시뮬레이터 (트럭 3D & 창고 랙 3D 듀얼 모드)
    ========================================================================= */
 
 interface CargoBox {
@@ -28,6 +28,7 @@ interface CargoBox {
   h: number; // mm
   d: number; // mm
   weightKg: number;
+  fragile?: boolean;
 }
 
 const TRUCK_DIMENSIONS = {
@@ -38,36 +39,39 @@ const TRUCK_DIMENSIONS = {
 
 const SAMPLE_CARGO: CargoBox[] = [
   // 5번 정류장 화물 (가장 안쪽 적재)
-  { id: 'BX-001', name: '원목 식탁 상판', consignee: '최*희 (용인 기흥)', stop: 5, color: '#6366f1', x: 200, y: 0, z: 200, w: 900, h: 400, d: 1800, weightKg: 35.0 },
-  { id: 'BX-002', name: '의자 박스 A (2개입)', consignee: '최*희 (용인 기흥)', stop: 5, color: '#818cf8', x: 1200, y: 0, z: 200, w: 900, h: 800, d: 800, weightKg: 18.0 },
-  { id: 'BX-003', name: '의자 박스 B (2개입)', consignee: '최*희 (용인 기흥)', stop: 5, color: '#818cf8', x: 1200, y: 0, z: 1100, w: 900, h: 800, d: 800, weightKg: 18.0 },
+  { id: 'BX-001', name: '원목 식탁 상판 (오크)', consignee: '최*희 (용인 기흥)', stop: 5, color: '#6366f1', x: 200, y: 0, z: 200, w: 900, h: 400, d: 1800, weightKg: 35.0, fragile: true },
+  { id: 'BX-002', name: '원목 체어 A세트 (2개입)', consignee: '최*희 (용인 기흥)', stop: 5, color: '#818cf8', x: 1200, y: 0, z: 200, w: 900, h: 800, d: 800, weightKg: 18.0 },
+  { id: 'BX-003', name: '원목 체어 B세트 (2개입)', consignee: '최*희 (용인 기흥)', stop: 5, color: '#818cf8', x: 1200, y: 0, z: 1100, w: 900, h: 800, d: 800, weightKg: 18.0 },
 
   // 4번 정류장 화물
-  { id: 'BX-004', name: '패브릭 리클라이너', consignee: '정*우 (수원 영통)', stop: 4, color: '#06b6d4', x: 200, y: 0, z: 2100, w: 1000, h: 1100, d: 1100, weightKg: 42.0 },
-  { id: 'BX-005', name: '스탠드 조명 패키지', consignee: '정*우 (수원 영통)', stop: 4, color: '#22d3ee', x: 1300, y: 0, z: 2100, w: 800, h: 1200, d: 800, weightKg: 15.0 },
+  { id: 'BX-004', name: '1인용 패브릭 리클라이너', consignee: '정*우 (수원 영통)', stop: 4, color: '#06b6d4', x: 200, y: 0, z: 2100, w: 1000, h: 1100, d: 1100, weightKg: 42.0 },
+  { id: 'BX-005', name: '스탠드 조명 패키지', consignee: '정*우 (수원 영통)', stop: 4, color: '#22d3ee', x: 1300, y: 0, z: 2100, w: 800, h: 1200, d: 800, weightKg: 15.0, fragile: true },
 
   // 3번 정류장 화물
-  { id: 'BX-006', name: '3단 서랍장', consignee: '김*수 (성남 분당)', stop: 3, color: '#10b981', x: 200, y: 0, z: 3300, w: 900, h: 900, d: 1200, weightKg: 28.0 },
-  { id: 'BX-007', name: '협탁 2종 세트', consignee: '김*수 (성남 분당)', stop: 3, color: '#34d399', x: 1200, y: 0, z: 3300, w: 900, h: 700, d: 900, weightKg: 16.0 },
+  { id: 'BX-006', name: '화이트 3단 서랍장', consignee: '김*수 (성남 분당)', stop: 3, color: '#10b981', x: 200, y: 0, z: 3300, w: 900, h: 900, d: 1200, weightKg: 28.0 },
+  { id: 'BX-007', name: '베드사이드 협탁 2종', consignee: '김*수 (성남 분당)', stop: 3, color: '#34d399', x: 1200, y: 0, z: 3300, w: 900, h: 700, d: 900, weightKg: 16.0 },
 
   // 2번 정류장 화물
-  { id: 'BX-008', name: '오피스 메쉬 체어', consignee: '이*진 (서울 서초)', stop: 2, color: '#f59e0b', x: 200, y: 0, z: 4600, w: 800, h: 950, d: 800, weightKg: 14.5 },
-  { id: 'BX-009', name: '모션데스크 프레임', consignee: '이*진 (서울 서초)', stop: 2, color: '#fbbf24', x: 1100, y: 0, z: 4300, w: 1000, h: 400, d: 1500, weightKg: 32.0 },
+  { id: 'BX-008', name: '인체공학 메쉬 체어', consignee: '이*진 (서울 서초)', stop: 2, color: '#f59e0b', x: 200, y: 0, z: 4600, w: 800, h: 950, d: 800, weightKg: 14.5 },
+  { id: 'BX-009', name: '모션데스크 전동 프레임', consignee: '이*진 (서울 서초)', stop: 2, color: '#fbbf24', x: 1100, y: 0, z: 4300, w: 1000, h: 400, d: 1500, weightKg: 32.0 },
 
-  // 1번 정류장 화물 (가장 앞문/도어 쪽 적재 - 첫 번째 배송)
-  { id: 'BX-010', name: '에어 서큘레이터 대형', consignee: '박*훈 (서울 강남)', stop: 1, color: '#ec4899', x: 300, y: 0, z: 5450, w: 600, h: 600, d: 650, weightKg: 8.5 },
-  { id: 'BX-011', name: '인체공학 모니터암', consignee: '박*훈 (서울 강남)', stop: 1, color: '#f472b6', x: 1000, y: 0, z: 5450, w: 500, h: 400, d: 600, weightKg: 6.0 },
+  // 1번 정류장 화물 (가장 앞문 도어 쪽 적재 - 첫 번째 배송)
+  { id: 'BX-010', name: '대형 에어 서큘레이터', consignee: '박*훈 (서울 강남)', stop: 1, color: '#ec4899', x: 300, y: 0, z: 5450, w: 600, h: 600, d: 650, weightKg: 8.5 },
+  { id: 'BX-011', name: '듀얼 모니터암 프리미엄', consignee: '박*훈 (서울 강남)', stop: 1, color: '#f472b6', x: 1000, y: 0, z: 5450, w: 500, h: 400, d: 600, weightKg: 6.0 },
 ];
 
 function Truck3DCubingViewer() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [viewMode, setViewMode] = useState<'TRUCK' | 'RACK'>('TRUCK');
   const [rotX, setRotX] = useState(25);
   const [rotY, setRotY] = useState(45);
   const [zoom, setZoom] = useState(0.85);
   const [isDragging, setIsDragging] = useState(false);
   const [lastMouse, setLastMouse] = useState({ x: 0, y: 0 });
-  const [currentStep, setCurrentStep] = useState(5); // 1~5 단계별 상차
-  const [selectedBox, setSelectedBox] = useState<CargoBox | null>(null);
+  const [currentStep, setCurrentStep] = useState(5);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [xrayMode, setXrayMode] = useState(false);
+  const [selectedBox, setSelectedBox] = useState<CargoBox | null>(SAMPLE_CARGO[0]);
 
   // 마우스 드래그 3D 회전 제어
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -86,6 +90,15 @@ function Truck3DCubingViewer() {
 
   const handleMouseUp = () => setIsDragging(false);
 
+  // 스텝별 자동 상차 재생 루프 (Auto-Play)
+  useEffect(() => {
+    if (!isPlaying) return;
+    const timer = setInterval(() => {
+      setCurrentStep((prev) => (prev >= 5 ? 1 : prev + 1));
+    }, 1800);
+    return () => clearInterval(timer);
+  }, [isPlaying]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -103,20 +116,17 @@ function Truck3DCubingViewer() {
 
     const scale = (Math.min(width, height) / 8000) * zoom;
     const cx = width / 2;
-    const cy = height / 2 + 60;
+    const cy = height / 2 + 55;
 
     // 3D ➔ 2D 등각 투영 변환
     const project = (x: number, y: number, z: number) => {
-      // 트럭 중심축(0,0,0) 기준 오프셋
       const ox = x - TRUCK_DIMENSIONS.width / 2;
       const oy = y - TRUCK_DIMENSIONS.height / 2;
       const oz = z - TRUCK_DIMENSIONS.length / 2;
 
-      // Y축 회전 (Yaw)
       const x1 = ox * cosY + oz * sinY;
       const z1 = -ox * sinY + oz * cosY;
 
-      // X축 회전 (Pitch)
       const y2 = oy * cosX - z1 * sinX;
       const z2 = oy * sinX + z1 * cosX;
 
@@ -127,115 +137,155 @@ function Truck3DCubingViewer() {
       };
     };
 
-    // 1. 바닥 그림자 & 격자 그리드 그리기
-    ctx.strokeStyle = 'rgba(79, 70, 229, 0.15)';
-    ctx.lineWidth = 1;
-    for (let z = 0; z <= TRUCK_DIMENSIONS.length; z += 1000) {
-      const p1 = project(0, 0, z);
-      const p2 = project(TRUCK_DIMENSIONS.width, 0, z);
-      ctx.beginPath();
-      ctx.moveTo(p1.px, p1.py);
-      ctx.lineTo(p2.px, p2.py);
-      ctx.stroke();
+    if (viewMode === 'TRUCK') {
+      // 바닥 격자 그리드
+      ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
+      ctx.lineWidth = 1;
+      for (let z = 0; z <= TRUCK_DIMENSIONS.length; z += 1000) {
+        const p1 = project(0, 0, z);
+        const p2 = project(TRUCK_DIMENSIONS.width, 0, z);
+        ctx.beginPath();
+        ctx.moveTo(p1.px, p1.py);
+        ctx.lineTo(p2.px, p2.py);
+        ctx.stroke();
+      }
+      for (let x = 0; x <= TRUCK_DIMENSIONS.width; x += 1000) {
+        const p1 = project(x, 0, 0);
+        const p2 = project(x, 0, TRUCK_DIMENSIONS.length);
+        ctx.beginPath();
+        ctx.moveTo(p1.px, p1.py);
+        ctx.lineTo(p2.px, p2.py);
+        ctx.stroke();
+      }
+
+      // 트럭 컨테이너 외곽 섀시 프레임
+      const corners = [
+        project(0, 0, 0),
+        project(TRUCK_DIMENSIONS.width, 0, 0),
+        project(TRUCK_DIMENSIONS.width, TRUCK_DIMENSIONS.height, 0),
+        project(0, TRUCK_DIMENSIONS.height, 0),
+        project(0, 0, TRUCK_DIMENSIONS.length),
+        project(TRUCK_DIMENSIONS.width, 0, TRUCK_DIMENSIONS.length),
+        project(TRUCK_DIMENSIONS.width, TRUCK_DIMENSIONS.height, TRUCK_DIMENSIONS.length),
+        project(0, TRUCK_DIMENSIONS.height, TRUCK_DIMENSIONS.length),
+      ];
+
+      ctx.strokeStyle = xrayMode ? 'rgba(56, 189, 248, 0.6)' : 'rgba(148, 163, 184, 0.35)';
+      ctx.lineWidth = xrayMode ? 2 : 1.2;
+      ctx.setLineDash(xrayMode ? [2, 2] : [4, 4]);
+
+      const edges = [
+        [0,1],[1,2],[2,3],[3,0],
+        [4,5],[5,6],[6,7],[7,4],
+        [0,4],[1,5],[2,6],[3,7]
+      ];
+      edges.forEach(([i, j]) => {
+        ctx.beginPath();
+        ctx.moveTo(corners[i].px, corners[i].py);
+        ctx.lineTo(corners[j].px, corners[j].py);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+
+      // 화물 박스 렌더링
+      const visibleBoxes = SAMPLE_CARGO.filter((b) => b.stop >= 6 - currentStep);
+
+      const sortedBoxes = visibleBoxes.map((b) => {
+        const center = project(b.x + b.w / 2, b.y + b.h / 2, b.z + b.d / 2);
+        return { box: b, depth: center.depth };
+      }).sort((a, b) => a.depth - b.depth);
+
+      sortedBoxes.forEach(({ box }) => {
+        const isSelected = selectedBox?.id === box.id;
+        const x0 = box.x, x1 = box.x + box.w;
+        const y0 = box.y, y1 = box.y + box.h;
+        const z0 = box.z, z1 = box.z + box.d;
+
+        const p0 = project(x0, y0, z0);
+        const p1 = project(x1, y0, z0);
+        const p2 = project(x1, y1, z0);
+        const p3 = project(x0, y1, z0);
+        const p4 = project(x0, y0, z1);
+        const p5 = project(x1, y0, z1);
+        const p6 = project(x1, y1, z1);
+        const p7 = project(x0, y1, z1);
+
+        // 상단면
+        ctx.fillStyle = isSelected ? '#fbbf24' : box.color;
+        ctx.beginPath();
+        ctx.moveTo(p3.px, p3.py);
+        ctx.lineTo(p2.px, p2.py);
+        ctx.lineTo(p6.px, p6.py);
+        ctx.lineTo(p7.px, p7.py);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = isSelected ? '#ffffff' : 'rgba(255,255,255,0.7)';
+        ctx.lineWidth = isSelected ? 2 : 0.8;
+        ctx.stroke();
+
+        // 전면
+        ctx.fillStyle = adjustBrightness(box.color, isSelected ? -5 : -20);
+        ctx.beginPath();
+        ctx.moveTo(p4.px, p4.py);
+        ctx.lineTo(p5.px, p5.py);
+        ctx.lineTo(p6.px, p6.py);
+        ctx.lineTo(p7.px, p7.py);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // 우측면
+        ctx.fillStyle = adjustBrightness(box.color, isSelected ? -20 : -35);
+        ctx.beginPath();
+        ctx.moveTo(p1.px, p1.py);
+        ctx.lineTo(p5.px, p5.py);
+        ctx.lineTo(p6.px, p6.py);
+        ctx.lineTo(p2.px, p2.py);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      });
+
+    } else {
+      // WMS 3D 랙 웨어하우스 모드 렌더링
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+      ctx.lineWidth = 1;
+
+      // 3개 통로, 4단 랙 골든존 시각화
+      for (let aisle = 0; aisle < 3; aisle++) {
+        const xOffset = aisle * 1600 + 400;
+        for (let bay = 0; bay < 4; bay++) {
+          const zOffset = bay * 1400 + 400;
+          for (let level = 0; level < 4; level++) {
+            const yOffset = level * 550;
+            const isGoldenZone = level === 1 || level === 2; // 골든존 (허리~가슴 높이)
+
+            const p0 = project(xOffset, yOffset, zOffset);
+            const p1 = project(xOffset + 1200, yOffset, zOffset);
+            const p2 = project(xOffset + 1200, yOffset + 500, zOffset);
+            const p3 = project(xOffset, yOffset + 500, zOffset);
+            const p6 = project(xOffset + 1200, yOffset + 500, zOffset + 1000);
+            const p7 = project(xOffset, yOffset + 500, zOffset + 1000);
+
+            ctx.fillStyle = isGoldenZone
+              ? (aisle === 1 ? '#10b981' : '#34d399')
+              : '#334155';
+
+            ctx.beginPath();
+            ctx.moveTo(p3.px, p3.py);
+            ctx.lineTo(p2.px, p2.py);
+            ctx.lineTo(p6.px, p6.py);
+            ctx.lineTo(p7.px, p7.py);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = isGoldenZone ? '#a7f3d0' : '#64748b';
+            ctx.lineWidth = isGoldenZone ? 1.5 : 0.6;
+            ctx.stroke();
+          }
+        }
+      }
     }
-    for (let x = 0; x <= TRUCK_DIMENSIONS.width; x += 1000) {
-      const p1 = project(x, 0, 0);
-      const p2 = project(x, 0, TRUCK_DIMENSIONS.length);
-      ctx.beginPath();
-      ctx.moveTo(p1.px, p1.py);
-      ctx.lineTo(p2.px, p2.py);
-      ctx.stroke();
-    }
-
-    // 2. 트럭 컨테이너 투명 프레임 섀시 그리기
-    const corners = [
-      project(0, 0, 0),
-      project(TRUCK_DIMENSIONS.width, 0, 0),
-      project(TRUCK_DIMENSIONS.width, TRUCK_DIMENSIONS.height, 0),
-      project(0, TRUCK_DIMENSIONS.height, 0),
-      project(0, 0, TRUCK_DIMENSIONS.length),
-      project(TRUCK_DIMENSIONS.width, 0, TRUCK_DIMENSIONS.length),
-      project(TRUCK_DIMENSIONS.width, TRUCK_DIMENSIONS.height, TRUCK_DIMENSIONS.length),
-      project(0, TRUCK_DIMENSIONS.height, TRUCK_DIMENSIONS.length),
-    ];
-
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 4]);
-
-    const edges = [
-      [0,1],[1,2],[2,3],[3,0],
-      [4,5],[5,6],[6,7],[7,4],
-      [0,4],[1,5],[2,6],[3,7]
-    ];
-    edges.forEach(([i, j]) => {
-      ctx.beginPath();
-      ctx.moveTo(corners[i].px, corners[i].py);
-      ctx.lineTo(corners[j].px, corners[j].py);
-      ctx.stroke();
-    });
-    ctx.setLineDash([]);
-
-    // 3. 화물 박스 렌더링 (현재 적재 단계에 해당하는 박스만)
-    const visibleBoxes = SAMPLE_CARGO.filter((b) => b.stop >= 6 - currentStep);
-
-    // 깊이 정렬 (Painter's Algorithm)
-    const sortedBoxes = visibleBoxes.map((b) => {
-      const center = project(b.x + b.w / 2, b.y + b.h / 2, b.z + b.d / 2);
-      return { box: b, depth: center.depth };
-    }).sort((a, b) => a.depth - b.depth);
-
-    sortedBoxes.forEach(({ box }) => {
-      const x0 = box.x, x1 = box.x + box.w;
-      const y0 = box.y, y1 = box.y + box.h;
-      const z0 = box.z, z1 = box.z + box.d;
-
-      const p0 = project(x0, y0, z0);
-      const p1 = project(x1, y0, z0);
-      const p2 = project(x1, y1, z0);
-      const p3 = project(x0, y1, z0);
-      const p4 = project(x0, y0, z1);
-      const p5 = project(x1, y0, z1);
-      const p6 = project(x1, y1, z1);
-      const p7 = project(x0, y1, z1);
-
-      // 상단면 (Top Face)
-      ctx.fillStyle = box.color;
-      ctx.beginPath();
-      ctx.moveTo(p3.px, p3.py);
-      ctx.lineTo(p2.px, p2.py);
-      ctx.lineTo(p6.px, p6.py);
-      ctx.lineTo(p7.px, p7.py);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-
-      // 전면 (Front Face)
-      ctx.fillStyle = adjustBrightness(box.color, -20);
-      ctx.beginPath();
-      ctx.moveTo(p4.px, p4.py);
-      ctx.lineTo(p5.px, p5.py);
-      ctx.lineTo(p6.px, p6.py);
-      ctx.lineTo(p7.px, p7.py);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 우측면 (Right Face)
-      ctx.fillStyle = adjustBrightness(box.color, -35);
-      ctx.beginPath();
-      ctx.moveTo(p1.px, p1.py);
-      ctx.lineTo(p5.px, p5.py);
-      ctx.lineTo(p6.px, p6.py);
-      ctx.lineTo(p2.px, p2.py);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    });
-
-  }, [rotX, rotY, zoom, currentStep]);
+  }, [rotX, rotY, zoom, currentStep, viewMode, xrayMode, selectedBox]);
 
   function adjustBrightness(hex: string, percent: number) {
     const num = parseInt(hex.replace('#', ''), 16);
@@ -260,46 +310,65 @@ function Truck3DCubingViewer() {
         <div>
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Box size={18} />
+              {viewMode === 'TRUCK' ? <Box size={18} /> : <Warehouse size={18} />}
             </span>
-            <h3 className="text-base font-bold text-white">
-              3D 디지털 트윈 트럭 적재 시뮬레이터 (Cubing Engine)
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              {viewMode === 'TRUCK' ? '3D 트럭 적재 시뮬레이터 (Cubing Engine)' : '3D 창고 랙 로케이션 & 골든존 (WMS Slotting)'}
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
+                Digital Twin
+              </span>
             </h3>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            5T 윙바디 기준 LIFO(후입선출) 역순 적재 및 실시간 3D AABB 공간 최적화 시각화
+            {viewMode === 'TRUCK'
+              ? 'LIFO(후입선출) 역순 배송지별 패킹 및 실시간 축중 밸런스 3D 시뮬레이션'
+              : '파레토 ABC 30일 출고 빈도 기반 골든존(2~3단) 자동 배치 시각화'}
           </p>
         </div>
 
-        {/* 3D 뷰어 인터랙션 컨트롤러 */}
+        {/* 듀얼 모드 및 3D 뷰어 제어 바 */}
         <div className="flex items-center gap-2">
+          <div className="flex rounded-lg bg-slate-800 p-0.5 border border-slate-700">
+            <button
+              onClick={() => setViewMode('TRUCK')}
+              className={`px-2.5 py-1 rounded text-xs font-semibold transition ${
+                viewMode === 'TRUCK' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              5T 윙바디
+            </button>
+            <button
+              onClick={() => setViewMode('RACK')}
+              className={`px-2.5 py-1 rounded text-xs font-semibold transition ${
+                viewMode === 'RACK' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              WMS 랙
+            </button>
+          </div>
+
+          <button
+            onClick={() => setXrayMode((x) => !x)}
+            className={`p-1.5 rounded-lg text-xs transition border ${
+              xrayMode ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'
+            }`}
+            title="X-Ray 투시 모드"
+          >
+            <Eye size={14} />
+          </button>
           <button
             onClick={() => { setRotX(25); setRotY(45); setZoom(0.85); }}
-            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition"
+            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition border border-slate-700"
             title="기본 시점 복원"
           >
             <RotateCw size={14} />
-          </button>
-          <button
-            onClick={() => setZoom((z) => Math.min(1.4, z + 0.1))}
-            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition"
-            title="확대"
-          >
-            <ZoomIn size={14} />
-          </button>
-          <button
-            onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
-            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition"
-            title="축소"
-          >
-            <ZoomOut size={14} />
           </button>
         </div>
       </div>
 
       {/* 3D Canvas 영역 */}
       <div
-        className="relative w-full h-80 sm:h-96 bg-gradient-to-b from-slate-950/80 to-slate-900/90 rounded-xl overflow-hidden border border-slate-800/80 flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+        className="relative w-full h-80 sm:h-96 bg-gradient-to-b from-slate-950/90 to-slate-900/90 rounded-xl overflow-hidden border border-slate-800/80 flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -314,58 +383,64 @@ function Truck3DCubingViewer() {
 
         {/* 좌측 상단 HUD 지표 */}
         <div className="absolute top-3 left-3 space-y-1.5 pointer-events-none">
-          <div className="px-2.5 py-1 bg-slate-900/80 border border-slate-700/60 rounded-lg backdrop-blur text-[11px] text-slate-300 flex items-center gap-2">
-            <span className="text-slate-500">차량 규격:</span>
+          <div className="px-2.5 py-1 bg-slate-900/85 border border-slate-700/60 rounded-lg backdrop-blur text-[11px] text-slate-300 flex items-center gap-2 shadow-lg">
+            <span className="text-slate-500">차량:</span>
             <strong className="text-white">5T 윙바디 (6.2m × 2.3m × 2.4m)</strong>
           </div>
-          <div className="px-2.5 py-1 bg-slate-900/80 border border-slate-700/60 rounded-lg backdrop-blur text-[11px] text-slate-300 flex items-center gap-2">
-            <span className="text-slate-500">공간 적재율:</span>
-            <strong className="text-emerald-400">{volumeEfficiency}%</strong>
+          <div className="px-2.5 py-1 bg-slate-900/85 border border-slate-700/60 rounded-lg backdrop-blur text-[11px] text-slate-300 flex items-center gap-2 shadow-lg">
+            <span className="text-slate-500">적재 효율:</span>
+            <strong className="text-emerald-400 font-bold">{volumeEfficiency}%</strong>
             <span className="text-[10px] text-slate-400">({loadedVolumeCbm} / {totalCapacityCbm} CBM)</span>
+          </div>
+          <div className="px-2.5 py-1 bg-slate-900/85 border border-slate-700/60 rounded-lg backdrop-blur text-[11px] text-slate-300 flex items-center gap-2 shadow-lg">
+            <span className="text-slate-500">축중 분배:</span>
+            <span className="text-indigo-300 font-mono">전축 42% / 후축 58% (최적 균형)</span>
           </div>
         </div>
 
-        {/* 우측 상단 LIFO 정류장 안내 뱃지 */}
+        {/* 우측 상단 LIFO 순번 가이드 */}
         <div className="absolute top-3 right-3 flex flex-col gap-1 pointer-events-none">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right mb-0.5">LIFO 하차 순번</span>
           <div className="flex items-center gap-1.5 justify-end">
-            <span className="w-2.5 h-2.5 rounded-full bg-pink-500 shadow-sm" />
+            <span className="w-2 h-2 rounded-full bg-pink-500" />
             <span className="text-[10px] text-slate-300">Stop 1 (강남)</span>
           </div>
           <div className="flex items-center gap-1.5 justify-end">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm" />
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
             <span className="text-[10px] text-slate-300">Stop 2 (서초)</span>
           </div>
           <div className="flex items-center gap-1.5 justify-end">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span className="text-[10px] text-slate-300">Stop 3 (분당)</span>
           </div>
           <div className="flex items-center gap-1.5 justify-end">
-            <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-sm" />
+            <span className="w-2 h-2 rounded-full bg-cyan-500" />
             <span className="text-[10px] text-slate-300">Stop 4 (영통)</span>
           </div>
           <div className="flex items-center gap-1.5 justify-end">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-sm" />
+            <span className="w-2 h-2 rounded-full bg-indigo-500" />
             <span className="text-[10px] text-slate-300">Stop 5 (기흥)</span>
           </div>
         </div>
-
-        {/* 하단 회전 가이드 안내 */}
-        <div className="absolute bottom-2 text-center text-[10px] text-slate-500 pointer-events-none">
-          마우스 클릭 드래그로 360도 3D 회전 및 적재 상태를 입체 검사할 수 있습니다.
-        </div>
       </div>
 
-      {/* 단계별 상차 시뮬레이션 슬라이더 */}
-      <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-2">
+      {/* 단계별 상차 슬라이더 & 자동재생 버튼 */}
+      <div className="p-3.5 bg-slate-950/60 border border-slate-800 rounded-xl space-y-2.5">
         <div className="flex justify-between items-center text-xs">
-          <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-            <Sliders size={13} className="text-indigo-400" />
-            스텝별 상차 단계 시뮬레이션:
-            <strong className="text-indigo-300">총 5개 경유지 중 {currentStep}단계 적재중</strong>
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsPlaying((p) => !p)}
+              className="p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition flex items-center gap-1 text-[11px] font-semibold"
+            >
+              {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+              <span>{isPlaying ? '일시정지' : '상차 자동재생'}</span>
+            </button>
+            <span className="text-slate-300 font-semibold">
+              적재 진행도: <strong className="text-indigo-400">Step {currentStep} / 5</strong>
+            </span>
+          </div>
           <span className="text-[11px] text-slate-400 font-mono">
-            {currentStep === 5 ? '만차 상차 완료 (LIFO 적재 확정)' : `${5 - currentStep}개 배송지 대기`}
+            {currentStep === 5 ? '전체 적재 완료 (출발 준비)' : `잔여 ${5 - currentStep}개 배송지`}
           </span>
         </div>
         <input
@@ -377,12 +452,154 @@ function Truck3DCubingViewer() {
           onChange={(e) => setCurrentStep(Number(e.target.value))}
           className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
         />
-        <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-          <span>Step 1 (안쪽 5번 정류장)</span>
-          <span>Step 2 (4번)</span>
-          <span>Step 3 (3번)</span>
-          <span>Step 4 (2번)</span>
-          <span>Step 5 (도어 1번 정류장)</span>
+      </div>
+
+      {/* 선택 화물 상세 인스펙터 바 */}
+      {selectedBox && (
+        <div className="p-3 bg-slate-800/40 border border-indigo-500/20 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: selectedBox.color }} />
+            <div>
+              <span className="font-bold text-white">{selectedBox.name}</span>
+              <span className="text-slate-400 text-[11px] ml-2">({selectedBox.consignee})</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-slate-300 font-mono text-[11px]">
+            <span>규격: {selectedBox.w}×{selectedBox.h}×{selectedBox.d}mm</span>
+            <span className="text-emerald-400 font-bold">{selectedBox.weightKg}kg</span>
+            <span className="px-2 py-0.5 rounded bg-slate-700/60 text-slate-300 text-[10px]">
+              Stop #{selectedBox.stop}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================================
+   2. 인터랙티브 VRP 2-Opt 배송 경로 최적화 맵 (Interactive Route Map)
+   ========================================================================= */
+
+function VrpRouteMapViewer() {
+  const [routeMode, setRouteMode] = useState<'AFTER_2OPT' | 'BEFORE'>('AFTER_2OPT');
+
+  // 수도권 주요 거점 및 배송지 좌표 (SVG 뷰포트 정규화)
+  const WAYPOINTS = [
+    { id: 'HUB', name: '이천 통합물류센터 (출발)', x: 380, y: 240, type: 'HUB' },
+    { id: 'S5', name: 'Stop 5: 용인 기흥구', x: 280, y: 220, type: 'STOP' },
+    { id: 'S4', name: 'Stop 4: 수원 영통구', x: 230, y: 210, type: 'STOP' },
+    { id: 'S3', name: 'Stop 3: 성남 분당구', x: 260, y: 150, type: 'STOP' },
+    { id: 'S2', name: 'Stop 2: 서울 서초구', x: 210, y: 100, type: 'STOP' },
+    { id: 'S1', name: 'Stop 1: 서울 강남구', x: 240, y: 80, type: 'STOP' },
+  ];
+
+  // 2-Opt 최적화 후: 매끄러운 단일 루프
+  const OPTIMIZED_PATH = "M 380 240 L 280 220 L 230 210 L 260 150 L 210 100 L 240 80";
+
+  // 최적화 전 (비효율적인 교차 지그재그 경로)
+  const UNOPTIMIZED_PATH = "M 380 240 L 240 80 L 280 220 L 210 100 L 260 150 L 230 210";
+
+  return (
+    <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl backdrop-blur-md">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              <Route size={18} />
+            </span>
+            <h3 className="text-base font-bold text-white">
+              VRP 2-Opt 휴리스틱 경로 최적화 관제 맵
+            </h3>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            이천 메인허브 출발 ➔ 수도권 5개 경유지 2-Opt TSP 알고리즘 교차선 제거 시뮬레이션
+          </p>
+        </div>
+
+        {/* 최적화 전/후 비교 스위치 */}
+        <div className="flex rounded-lg bg-slate-800 p-0.5 border border-slate-700">
+          <button
+            onClick={() => setRouteMode('AFTER_2OPT')}
+            className={`px-3 py-1 rounded text-xs font-semibold transition flex items-center gap-1.5 ${
+              routeMode === 'AFTER_2OPT'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <CheckCircle2 size={12} />
+            <span>2-Opt 최적화 (51.8km)</span>
+          </button>
+          <button
+            onClick={() => setRouteMode('BEFORE')}
+            className={`px-3 py-1 rounded text-xs font-semibold transition flex items-center gap-1.5 ${
+              routeMode === 'BEFORE'
+                ? 'bg-red-950/50 text-red-300 border border-red-500/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <span>최적화 전 (64.2km)</span>
+          </button>
+        </div>
+      </div>
+
+      {/* SVG 인터랙티브 루트 맵 */}
+      <div className="relative w-full h-72 sm:h-80 bg-slate-950/90 rounded-xl overflow-hidden border border-slate-800/80 flex items-center justify-center">
+        <svg viewBox="100 40 350 240" className="w-full h-full">
+          {/* 배경 격자 라인 */}
+          <line x1="100" y1="100" x2="450" y2="100" stroke="#1e293b" strokeDasharray="3 3" />
+          <line x1="100" y1="160" x2="450" y2="160" stroke="#1e293b" strokeDasharray="3 3" />
+          <line x1="100" y1="220" x2="450" y2="220" stroke="#1e293b" strokeDasharray="3 3" />
+
+          {/* 운행 경로 라인 */}
+          <path
+            d={routeMode === 'AFTER_2OPT' ? OPTIMIZED_PATH : UNOPTIMIZED_PATH}
+            fill="none"
+            stroke={routeMode === 'AFTER_2OPT' ? '#10b981' : '#ef4444'}
+            strokeWidth="3.5"
+            strokeDasharray={routeMode === 'AFTER_2OPT' ? 'none' : '4 4'}
+            className="transition-all duration-700"
+          />
+
+          {/* 웨이포인트 노드 렌더링 */}
+          {WAYPOINTS.map((wp) => (
+            <g key={wp.id} className="cursor-pointer">
+              <circle
+                cx={wp.x}
+                cy={wp.y}
+                r={wp.type === 'HUB' ? 9 : 6.5}
+                fill={wp.type === 'HUB' ? '#4f46e5' : '#06b6d4'}
+                stroke="#ffffff"
+                strokeWidth="2"
+              />
+              <text
+                x={wp.x + 10}
+                y={wp.y + 4}
+                fill="#e2e8f0"
+                fontSize="9"
+                fontWeight="bold"
+                className="select-none font-sans"
+              >
+                {wp.name}
+              </text>
+            </g>
+          ))}
+        </svg>
+
+        {/* 맵 상단 플로팅 절감 성과 카드 */}
+        <div className="absolute top-3 left-3 bg-slate-900/85 border border-slate-700/60 rounded-xl p-2.5 text-xs backdrop-blur space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">총 운행 거리:</span>
+            <strong className={routeMode === 'AFTER_2OPT' ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'}>
+              {routeMode === 'AFTER_2OPT' ? '51.8 km (-19.3% 단축)' : '64.2 km (비효율 경로)'}
+            </strong>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">예상 소요시간:</span>
+            <strong className="text-slate-200">
+              {routeMode === 'AFTER_2OPT' ? '116분 (32분 절감)' : '148분'}
+            </strong>
+          </div>
         </div>
       </div>
     </div>
@@ -390,246 +607,259 @@ function Truck3DCubingViewer() {
 }
 
 /* =========================================================================
-   2. AI 지능형 코파일럿 (Autonomous Logistics Copilot)
+   3. AI 스마트 물류 코파일럿 대화 엔진 (Full-Interactive Multi-Turn)
    ========================================================================= */
 
-interface CopilotQuery {
+interface ChatMessage {
   id: string;
-  prompt: string;
-  category: 'CAPA' | 'BOM' | 'VRP' | 'SETTLE';
-  icon: React.ReactNode;
+  sender: 'user' | 'bot';
+  text: string;
+  time: string;
+  actionCard?: {
+    title: string;
+    metrics: { label: string; value: string }[];
+    buttonText: string;
+    onClickNotice: string;
+  };
 }
 
-const PRESET_QUERIES: CopilotQuery[] = [
-  {
-    id: 'q1',
-    prompt: '강남권역 CAPA 140% 초과 감지 및 실시간 AI 증차/배차 대안 제시',
-    category: 'CAPA',
-    icon: <Gauge size={14} className="text-amber-400" />,
-  },
-  {
-    id: 'q2',
-    prompt: '원목 식탁 세트(BOM) 출고 전 구성품 수불 및 병목(Bottleneck) 부품 진단',
-    category: 'BOM',
-    icon: <Layers size={14} className="text-indigo-400" />,
-  },
-  {
-    id: 'q3',
-    prompt: '이천 허브 출발 7개 배송지 2-Opt 휴리스틱 TSP 최적 경로 산출 및 거리 단축률',
-    category: 'VRP',
-    icon: <Navigation size={14} className="text-cyan-400" />,
-  },
-  {
-    id: 'q4',
-    prompt: '오피넷 실시간 유류할증료 연동 및 배송기사 당일 빠른정산(Factoring) 시뮬레이션',
-    category: 'SETTLE',
-    icon: <ShieldCheck size={14} className="text-emerald-400" />,
-  },
-];
-
 function AiLogisticsCopilot() {
-  const [activeQuery, setActiveQuery] = useState<string>('q1');
-  const [customInput, setCustomInput] = useState<string>('');
-  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [autoPilotStatus, setAutoPilotStatus] = useState<string>('ACTIVE');
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 'm1',
+      sender: 'bot',
+      text: '반갑습니다. DOT2LINE 전사 AI 물류 코파일럿입니다. CAPA 부하 진단, 2-Opt 경로 최적화, BOM 부품 수불, 유가 연동 정산 등 실시간 질의를 지시해 주세요.',
+      time: '08:20',
+    },
+  ]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSelectQuery = (id: string) => {
-    setActiveQuery(id);
-    setIsAnalyzing(true);
-    setTimeout(() => setIsAnalyzing(false), 400);
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, isTyping]);
+
+  const handleSend = (userText: string) => {
+    if (!userText.trim()) return;
+
+    const userMsg: ChatMessage = {
+      id: 'usr-' + Date.now(),
+      sender: 'user',
+      text: userText,
+      time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setInput('');
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const botResponse = generateBotResponse(userText);
+      setMessages((prev) => [...prev, botResponse]);
+      setIsTyping(false);
+    }, 600);
+  };
+
+  const generateBotResponse = (prompt: string): ChatMessage => {
+    const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    const p = prompt.toLowerCase();
+
+    if (p.includes('단가') || p.includes('운임') || p.includes('11t') || p.includes('수송')) {
+      return {
+        id: 'bot-' + Date.now(),
+        sender: 'bot',
+        text: '11T 수송 차량(100km, 냉장 20%, 야간 20%, 주말 10%, 리프트 게이트) 표준 단가 매트릭스를 대사하였습니다.',
+        time,
+        actionCard: {
+          title: '11T 냉장 차량 표준 계약 운임 산출',
+          metrics: [
+            { label: '기본 운임', value: '460,000원' },
+            { label: '복합 할증액', value: '+250,000원' },
+            { label: '총 공급가액', value: '710,000원' },
+            { label: '부가세 포함 합계', value: '781,000원' },
+          ],
+          buttonText: '배차 전표 단가 바인딩',
+          onClickNotice: '배차 전표(T_DISPATCH)에 781,000원 표준 단가가 바인딩되었습니다.',
+        },
+      };
+    } else if (p.includes('bom') || p.includes('세트') || p.includes('부품') || p.includes('식탁')) {
+      return {
+        id: 'bot-' + Date.now(),
+        sender: 'bot',
+        text: '4인 원목 식탁세트(BOM) 5건 출고 요청을 검증했습니다. 원목 체어 재고 부족으로 세트 부분 출고가 자동 차단되었습니다.',
+        time,
+        actionCard: {
+          title: 'BOM 세트 수불 검증 (부품 부족)',
+          metrics: [
+            { label: '요청 수량', value: '5 세트' },
+            { label: '체어 가용재고', value: '8개 (12개 부족)' },
+            { label: '최대 조립가능', value: '2 세트' },
+            { label: '판정 상태', value: 'LACK_OF_COMPONENT' },
+          ],
+          buttonText: '2세트 우선 분할 출고',
+          onClickNotice: '2세트 우선 출고 분할 전표가 생성되었습니다.',
+        },
+      };
+    } else if (p.includes('capa') || p.includes('부하') || p.includes('초과') || p.includes('강남')) {
+      return {
+        id: 'bot-' + Date.now(),
+        sender: 'bot',
+        text: '강남/서초권역 당일 배송 부하율 140%(초과 12 CBM)가 감지되었습니다. 2.5T 중형 윙바디 긴급 증차를 제안합니다.',
+        time,
+        actionCard: {
+          title: '권역 CAPA 초과 자동 대응안',
+          metrics: [
+            { label: '현재 부하율', value: '140.0% (심각)' },
+            { label: '초과 용적', value: '+12.0 CBM' },
+            { label: '추천 차량', value: '2.5T 윙바디 1대' },
+          ],
+          buttonText: '증차 배차 승인',
+          onClickNotice: '2.5T 윙바디 긴급 증차가 승인되어 배차가 생성되었습니다.',
+        },
+      };
+    } else if (p.includes('송장') || p.includes('택배') || p.includes('cj') || p.includes('우체국')) {
+      return {
+        id: 'bot-' + Date.now(),
+        sender: 'bot',
+        text: 'CJ대한통운(Mod-7) 12자리 유효 운송장 689201234562 번을 검증하였습니다. 정상 등록 번호입니다.',
+        time,
+        actionCard: {
+          title: '국내 택배사 운송장 체크섬 검증 통과',
+          metrics: [
+            { label: '택배사', value: 'CJ대한통운' },
+            { label: '운송장번호', value: '6892-0123-4562' },
+            { label: '체크섬 결과', value: 'Mod-7 유효 (PASS)' },
+          ],
+          buttonText: '실시간 배송 조회',
+          onClickNotice: '공식 배송조회 페이지로 연결되었습니다.',
+        },
+      };
+    } else {
+      return {
+        id: 'bot-' + Date.now(),
+        sender: 'bot',
+        text: `"${prompt}" 에 대한 OMS/TMS 복합 규칙을 분석했습니다. 모든 거점의 가용재고 및 14:00 주문 마감 컷오프가 충족되어 정상 자동 처리 대기열에 등록되었습니다.`,
+        time,
+      };
+    }
   };
 
   return (
-    <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl backdrop-blur-md">
-      <div className="flex justify-between items-center pb-3 border-b border-slate-800">
+    <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl backdrop-blur-md flex flex-col h-[520px]">
+      <div className="flex justify-between items-center pb-3 border-b border-slate-800 shrink-0">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-500 text-white shadow-md shadow-indigo-500/30">
             <Bot size={18} />
           </div>
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              DOT2LINE AI 스마트 물류 코파일럿
+              DOT2LINE AI 코파일럿
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold animate-pulse">
-                Autonomous Copilot
+                Live AI
               </span>
             </h3>
-            <p className="text-xs text-slate-400">자연어 지시 및 실시간 다차원 제약 최적화 솔루션</p>
+            <p className="text-xs text-slate-400">자연어 지시 및 실시간 다차원 제약 최적화</p>
           </div>
         </div>
+      </div>
 
+      {/* 대화 히스토리 스크롤 뷰 */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+        {messages.map((m) => (
+          <div
+            key={m.id}
+            className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}
+          >
+            <div
+              className={`max-w-[88%] p-3 rounded-2xl leading-relaxed ${
+                m.sender === 'user'
+                  ? 'bg-indigo-600 text-white rounded-br-none'
+                  : 'bg-slate-800/80 border border-slate-700/60 text-slate-200 rounded-bl-none shadow-md'
+              }`}
+            >
+              {m.text}
+
+              {/* 봇 액션 카드 */}
+              {m.actionCard && (
+                <div className="mt-3 p-3 bg-slate-950/80 border border-indigo-500/30 rounded-xl space-y-2">
+                  <span className="font-bold text-indigo-300 block text-[11px] pb-1 border-b border-slate-800">
+                    {m.actionCard.title}
+                  </span>
+                  <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                    {m.actionCard.metrics.map((met, idx) => (
+                      <div key={idx} className="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                        <span className="text-slate-400 block">{met.label}</span>
+                        <strong className="text-emerald-400">{met.value}</strong>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => alert(m.actionCard?.onClickNotice)}
+                    className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold text-[11px] transition active:scale-95 flex items-center justify-center gap-1"
+                  >
+                    <span>{m.actionCard.buttonText}</span>
+                    <ArrowRight size={11} />
+                  </button>
+                </div>
+              )}
+            </div>
+            <span className="text-[10px] text-slate-500 mt-1 px-1 font-mono">{m.time}</span>
+          </div>
+        ))}
+
+        {isTyping && (
+          <div className="flex items-center gap-1.5 text-xs text-indigo-400 p-2 font-medium animate-pulse">
+            <Sparkles size={13} />
+            <span>AI 코파일럿이 플랫폼 원장을 대사하고 있습니다...</span>
+          </div>
+        )}
+      </div>
+
+      {/* 빠른 지시 칩 바 */}
+      <div className="flex items-center gap-1.5 overflow-x-auto py-1 shrink-0 no-scrollbar">
         <button
-          onClick={() => setAutoPilotStatus((s) => (s === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'))}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
-            autoPilotStatus === 'ACTIVE'
-              ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-600/30'
-              : 'bg-slate-800 text-slate-400 hover:text-white'
-          }`}
+          onClick={() => handleSend('강남권역 CAPA 140% 초과 대책 수립해줘')}
+          className="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] whitespace-nowrap border border-slate-700 transition"
         >
-          <Activity size={13} className={autoPilotStatus === 'ACTIVE' ? 'animate-spin' : ''} />
-          <span>Auto-Pilot: {autoPilotStatus}</span>
+          🚨 CAPA 140% 초과 대책
+        </button>
+        <button
+          onClick={() => handleSend('식탁세트 BOM 부품 부족 검증해줘')}
+          className="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] whitespace-nowrap border border-slate-700 transition"
+        >
+          📦 BOM 식탁세트 검증
+        </button>
+        <button
+          onClick={() => handleSend('11T 냉장 100km 수송 단가 계산해줘')}
+          className="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] whitespace-nowrap border border-slate-700 transition"
+        >
+          🚚 11T 수송 단가
+        </button>
+        <button
+          onClick={() => handleSend('CJ 택배 운송장 체크섬 확인해줘')}
+          className="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] whitespace-nowrap border border-slate-700 transition"
+        >
+          🏷️ CJ 송장 체크섬
         </button>
       </div>
 
-      {/* 스마트 질의 프리셋 칩 목록 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {PRESET_QUERIES.map((q) => (
-          <button
-            key={q.id}
-            onClick={() => handleSelectQuery(q.id)}
-            className={`flex items-start gap-2.5 p-3 rounded-xl text-xs text-left transition ${
-              activeQuery === q.id
-                ? 'bg-indigo-600/20 border border-indigo-500/50 text-white shadow-sm'
-                : 'bg-slate-950/50 border border-slate-800/80 text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-            }`}
-          >
-            <span className="mt-0.5">{q.icon}</span>
-            <span className="flex-1 font-medium leading-relaxed">{q.prompt}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* 실시간 AI 분석 리포트 카드 */}
-      <div className="p-4 bg-slate-950/70 border border-indigo-500/20 rounded-xl space-y-3 relative overflow-hidden">
-        {isAnalyzing && (
-          <div className="absolute inset-0 bg-slate-950/90 flex items-center justify-center z-10 text-xs text-indigo-400 font-semibold animate-pulse">
-            AI 엔진이 실시간 수불 원장 및 배차 제약조건을 대사 중입니다...
-          </div>
-        )}
-
-        {activeQuery === 'q1' && (
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-              <span className="font-bold text-amber-400 flex items-center gap-1.5">
-                <AlertTriangle size={14} /> [위험 감지] 강남/서초권역 당일 배송 부하율 140.0% 초과
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono">초과 용적: +12.0 CBM</span>
-            </div>
-            <p className="text-slate-300 leading-relaxed">
-              설정 허용 CAPA(30.0 CBM) 대비 현재 확정 접수 주문(42.0 CBM)이 12 CBM 초과 발생하였습니다.
-              인접 <strong className="text-white">송파/강동권역(부하율 58%)</strong>으로 분산 배치하거나 아래 추천 차량 증차를 승인해 주세요.
-            </p>
-            <div className="p-2.5 bg-slate-900/80 rounded-lg border border-slate-800 flex justify-between items-center">
-              <div>
-                <span className="text-[11px] text-slate-400 block">AI 권장 차량 추천</span>
-                <span className="font-bold text-indigo-300">2.5T 중형 윙바디 1대 긴급 투입 승인</span>
-              </div>
-              <button
-                onClick={() => alert('AI 추천에 따라 2.5T 윙바디 차량 배차가 자동 생성되었습니다.')}
-                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold transition active:scale-95 flex items-center gap-1"
-              >
-                <span>원클릭 승인</span>
-                <ArrowRight size={12} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeQuery === 'q2' && (
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-              <span className="font-bold text-indigo-400 flex items-center gap-1.5">
-                <Layers size={14} /> [BOM 수불 검증] 4인 원목 식탁세트 출고 피킹 진단
-              </span>
-              <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30 font-bold text-[10px]">
-                출고 차단 (LACK_OF_COMPONENT)
-              </span>
-            </div>
-            <p className="text-slate-300 leading-relaxed">
-              5세트 출고 요청 접수 결과: 상판(15개)과 볼트팩(100개)은 충분하나, <strong className="text-red-400">원목 체어(필요 20개 / 가용 8개)</strong>의 재고가 12개 부족합니다.
-              부분 출고 방지 가드레일에 의해 피킹 승인이 보류되었으며, 최대 조립 가능 수량은 <strong className="text-emerald-400">2세트</strong>입니다.
-            </p>
-            <div className="p-2.5 bg-slate-900/80 rounded-lg border border-slate-800 flex justify-between items-center">
-              <div>
-                <span className="text-[11px] text-slate-400 block">AI 추천 조치</span>
-                <span className="font-bold text-white">2세트 분할 출고 우선 승인 + 3세트 납기 D+2일 재약속</span>
-              </div>
-              <button
-                onClick={() => alert('2세트 우선 출고 분할 전표가 생성되었습니다.')}
-                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold transition active:scale-95"
-              >
-                2세트 우선 분할
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeQuery === 'q3' && (
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-              <span className="font-bold text-cyan-400 flex items-center gap-1.5">
-                <Navigation size={14} /> [VRP 2-Opt] 이천 허브 배송 7개 경유지 경로 최적화
-              </span>
-              <span className="text-[10px] text-emerald-400 font-mono font-bold">운행거리 19.3% 절감</span>
-            </div>
-            <p className="text-slate-300 leading-relaxed">
-              초기 순차 경로(64.2 km / 148분)를 2-Opt TSP 교차선 제거 알고리즘으로 최적화하여 <strong className="text-emerald-400">51.8 km / 116분</strong>으로 단축하였습니다.
-              배송 순번: 이천 허브 ➔ 기흥(Stop 5) ➔ 영통(Stop 4) ➔ 분당(Stop 3) ➔ 서초(Stop 2) ➔ 강남(Stop 1).
-            </p>
-            <div className="p-2.5 bg-slate-900/80 rounded-lg border border-slate-800 flex justify-between items-center">
-              <div>
-                <span className="text-[11px] text-slate-400 block">예상 탄소 및 연료 절감</span>
-                <span className="font-bold text-white">경유 2.6L 절감 / 온실가스 6.8kg CO₂e 감축</span>
-              </div>
-              <button
-                onClick={() => alert('기사 모바일 앱 내비게이션으로 최적 순번이 전송되었습니다.')}
-                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold transition active:scale-95"
-              >
-                기사 앱 전송
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeQuery === 'q4' && (
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-              <span className="font-bold text-emerald-400 flex items-center gap-1.5">
-                <ShieldCheck size={14} /> [정산 가드] 오피넷 유가 연동 할증 & 당일 빠른정산
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono">한국석유공사 Opinet API 실시간 연동</span>
-            </div>
-            <p className="text-slate-300 leading-relaxed">
-              금일 서울/경기 경유 기준 유가 1,625원 반영(기준유가 1,500원 초과율 +8.33%).
-              운송 기본운임 220,000원에 유류할증료 18,300원 자동 가산. 당일 빠른정산 팩토링 수수료 1.5% 공제 후 234,720원 즉시 출금 가용.
-            </p>
-            <div className="p-2.5 bg-slate-900/80 rounded-lg border border-slate-800 flex justify-between items-center">
-              <div>
-                <span className="text-[11px] text-slate-400 block">기사 당일 즉시 입금액</span>
-                <span className="font-bold text-emerald-400 text-sm">₩ 234,720 (원천징수 전산 반영완료)</span>
-              </div>
-              <button
-                onClick={() => alert('기사 계좌로 당일 빠른정산 지급이 승인되었습니다.')}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold transition active:scale-95"
-              >
-                당일 즉시 지급
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* 자연어 질의 입력창 */}
-      <div className="flex items-center gap-2 pt-1">
+      <div className="flex items-center gap-2 pt-1 shrink-0">
         <input
           type="text"
-          value={customInput}
-          onChange={(e) => setCustomInput(e.target.value)}
-          placeholder="AI 코파일럿에게 물류 운영 지시를 입력하세요 (예: 미마감 주문 사유 분석 및 재배송안)"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="AI 코파일럿에게 물류 운영 지시를 입력하세요 (Enter)"
           className="flex-1 px-3.5 py-2.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && customInput.trim()) {
-              alert(`[AI Copilot 수신]: "${customInput}" 에 대한 플랫폼 룰 및 API 대사가 실행되었습니다.`);
-              setCustomInput('');
-            }
+            if (e.key === 'Enter') handleSend(input);
           }}
         />
         <button
-          onClick={() => {
-            if (customInput.trim()) {
-              alert(`[AI Copilot 수신]: "${customInput}" 에 대한 플랫폼 룰 및 API 대사가 실행되었습니다.`);
-              setCustomInput('');
-            }
-          }}
+          onClick={() => handleSend(input)}
           className="p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition active:scale-95 shrink-0"
         >
           <Send size={14} />
@@ -640,7 +870,7 @@ function AiLogisticsCopilot() {
 }
 
 /* =========================================================================
-   3. 실시간 차량 GPS 레이더 & 지오펜싱 도착 관제 그리드
+   4. 실시간 차량 GPS 레이더 & 지오펜싱 도착 관제 그리드
    ========================================================================= */
 
 interface LiveVehicle {
@@ -669,8 +899,8 @@ function LiveFleetRadar() {
             <Radio size={18} className="animate-pulse" />
           </span>
           <div>
-            <h3 className="text-base font-bold text-white">실시간 차량 GPS 레이더 & 지오펜싱 도착 감지</h3>
-            <p className="text-xs text-slate-400">500m 반경 진입 시 고객 알림톡 자동 발송 및 하역 대기 트리거</p>
+            <h3 className="text-base font-bold text-white">실시간 차량 GPS 레이더 & 지오펜싱 500m 도착 관제</h3>
+            <p className="text-xs text-slate-400">500m 반경 진입 시 고객 알림톡 자동 발송 및 하역 대기 트리거 연동</p>
           </div>
         </div>
         <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full border border-cyan-500/20 flex items-center gap-1.5">
@@ -679,7 +909,7 @@ function LiveFleetRadar() {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {LIVE_FLEET.map((v) => (
           <div
             key={v.carNo}
@@ -689,7 +919,6 @@ function LiveFleetRadar() {
               <div className="flex items-center gap-2">
                 <Truck size={15} className="text-slate-400" />
                 <span className="font-bold text-white text-xs">{v.carNo}</span>
-                <span className="text-[11px] text-slate-400">({v.driverNm})</span>
               </div>
               <span
                 className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
@@ -705,19 +934,16 @@ function LiveFleetRadar() {
             </div>
 
             <div className="text-[11px] space-y-1 text-slate-300">
+              <p className="text-slate-400 text-[10px] truncate">{v.driverNm}</p>
               <p className="flex justify-between text-slate-400">
-                <span>현재 위치:</span>
-                <strong className="text-slate-200">{v.currentLocation}</strong>
-              </p>
-              <p className="flex justify-between text-slate-400">
-                <span>다음 목적지:</span>
-                <strong className="text-indigo-300">{v.nextStop}</strong>
+                <span>목적지:</span>
+                <strong className="text-indigo-300 truncate max-w-[140px]">{v.nextStop}</strong>
               </p>
             </div>
 
             <div className="flex justify-between items-center text-[10px] text-slate-500 pt-1 border-t border-slate-800/60 font-mono">
               <span>속도: {v.speedKm} km/h</span>
-              <span>지오펜스 잔여: {v.geofenceDistM} m</span>
+              <span>지오펜스: {v.geofenceDistM}m</span>
             </div>
           </div>
         ))}
@@ -727,7 +953,7 @@ function LiveFleetRadar() {
 }
 
 /* =========================================================================
-   4. 메인 AI 관제 타워 페이지 레이아웃
+   5. 메인 AI 관제 타워 페이지
    ========================================================================= */
 
 export default function ControlTowerPage() {
@@ -759,32 +985,32 @@ export default function ControlTowerPage() {
 
       {/* 메인 관제 센터 본문 */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 md:p-8 space-y-6">
-        {/* 상단 헤더 배너 */}
+        {/* 상단 타이틀 배너 */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-800/80">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
               <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">
-                Full-Stack AI Autonomous Operations
+                Full-Stack Autonomous Logistics Platform
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              AI 스마트 물류 통합 관제 센터
+              차세대 AI 스마트 물류 통합 관제 센터
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              3D 디지털 트윈 적재 시뮬레이터, 실시간 VRP 경로 최적화, 지오펜싱 레이더 및 AI 코파일럿이 유기적으로 결합된 차세대 관제 시스템
+              3D 디지털 트윈 적재 시뮬레이터, VRP 2-Opt 경로 최적화 맵, 지오펜싱 레이더 및 AI 코파일럿 통합 운영
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-right">
               <span className="text-[10px] text-slate-500 block uppercase font-mono">Platform Health</span>
-              <span className="text-xs font-bold text-emerald-400">10개 전 도메인 무결성 가동중</span>
+              <span className="text-xs font-bold text-emerald-400">전 도메인 100% 무결성 가동중</span>
             </div>
           </div>
         </div>
 
-        {/* 2단 그리드: 3D 적재 시뮬레이터 + AI 코파일럿 */}
+        {/* 1단 그리드: 3D 적재 시뮬레이터 + AI 코파일럿 대화 엔진 */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-7">
             <Truck3DCubingViewer />
@@ -794,7 +1020,10 @@ export default function ControlTowerPage() {
           </div>
         </div>
 
-        {/* 하단: 실시간 GPS 레이더 & 지오펜싱 도착 관제 그리드 */}
+        {/* 2단: VRP 2-Opt 배송 경로 최적화 인터랙티브 맵 */}
+        <VrpRouteMapViewer />
+
+        {/* 3단: 실시간 GPS 레이더 & 지오펜싱 도착 관제 그리드 */}
         <LiveFleetRadar />
       </main>
     </div>
