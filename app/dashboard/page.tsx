@@ -260,6 +260,14 @@ export default function DashboardPage() {
           </button>
 
           <button
+            onClick={() => router.push('/analytics')}
+            className="w-full mt-2 flex items-center justify-center gap-1.5 py-2.5 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition"
+          >
+            <BarChart3 size={14} className="text-emerald-400" />
+            <span>경영 분석 및 ESG 리포트</span>
+          </button>
+
+          <button
             onClick={() => router.push('/apk')}
             className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs font-medium transition"
           >
@@ -354,6 +362,13 @@ export default function DashboardPage() {
           className="w-full flex items-center justify-center gap-2 py-2.5 mb-2 bg-gradient-to-r from-indigo-600 via-cyan-600 to-emerald-600 hover:opacity-95 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-500/20 active:scale-95 md:hidden"
         >
           <Sparkles size={14} /> AI 관제 타워 & 3D 적재 시뮬레이터
+        </button>
+
+        <button
+          onClick={() => router.push('/analytics')}
+          className="w-full flex items-center justify-center gap-2 py-2.5 mb-2 bg-slate-900 border border-emerald-500/30 text-emerald-300 rounded-xl text-xs font-bold transition shadow-sm active:scale-95 md:hidden"
+        >
+          <BarChart3 size={14} className="text-emerald-400" /> 경영 분석 & ESG 리포트
         </button>
 
         <button
