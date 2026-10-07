@@ -8,7 +8,8 @@ import {
   AlertTriangle, ArrowRight, RefreshCw, Eye, Play, Pause,
   RotateCw, ZoomIn, ZoomOut, CheckCircle2, ChevronRight,
   Layers, MapPin, Gauge, Activity, Radio, Cpu, Send,
-  Sliders, ArrowUpRight, Warehouse, Route, Check, Zap
+  Sliders, ArrowUpRight, Warehouse, Route, Check, Zap,
+  ShoppingCart, BarChart2, ShieldAlert, CheckCheck
 } from 'lucide-react';
 
 /* =========================================================================
@@ -720,6 +721,60 @@ function AiLogisticsCopilot() {
           onClickNotice: '2.5T 윙바디 긴급 증차가 승인되어 배차가 생성되었습니다.',
         },
       };
+    } else if (p.includes('실사') || p.includes('순환') || p.includes('오차') || p.includes('재고실사')) {
+      return {
+        id: 'bot-' + Date.now(),
+        sender: 'bot',
+        text: '이천센터 A급 순환재고실사를 대사했습니다. 50개 로케이션 중 48개 완료(오차 2건: 상판 +2 과다, 체어 -2 부족)가 검출되었습니다.',
+        time,
+        actionCard: {
+          title: '[WMS-05] 순환재고실사 차이 분석 및 원장 보정',
+          metrics: [
+            { label: '실사 완료율', value: '48/50 (96%)' },
+            { label: '전산 불일치', value: '2건 (오차율 4.2%)' },
+            { label: '차이 내역', value: '+2 과다 / -2 부족' },
+            { label: '원장 보정', value: '승인 대기중' },
+          ],
+          buttonText: '실사 차이 재고원장 자동 보정',
+          onClickNotice: 'T_WMS_STOCK_LEDGER 원장 수량이 실사값으로 일치화되었으며 실사 계획이 APPROVED 되었습니다.',
+        },
+      };
+    } else if (p.includes('쇼핑몰') || p.includes('채널') || p.includes('스마트스토어') || p.includes('쿠팡')) {
+      return {
+        id: 'bot-' + Date.now(),
+        sender: 'bot',
+        text: '네이버 스마트스토어, 쿠팡 윙, 11번가 채널 주문 94건을 수집하고, 출고 완료 송장 3건을 실시간 역전송 대기열에 바인딩했습니다.',
+        time,
+        actionCard: {
+          title: '[OMS-CH] 다채널 주문 자동 수집 및 송장 역전송',
+          metrics: [
+            { label: '연동 채널', value: '네이버, 쿠팡, 11st' },
+            { label: '신규 수집 주문', value: '94건 (중복 0건)' },
+            { label: 'OMS 자동 변환', value: '100% 즉시 등록' },
+            { label: '송장 역전송', value: '3건 전송 대기' },
+          ],
+          buttonText: '미전송 송장 즉시 역전송 실행',
+          onClickNotice: '쿠팡/네이버 스마트스토어로 3건의 출고 송장번호가 성공적으로 역전송되었습니다.',
+        },
+      };
+    } else if (p.includes('배차') || p.includes('푸시') || p.includes('fcm') || p.includes('기사')) {
+      return {
+        id: 'bot-' + Date.now(),
+        sender: 'bot',
+        text: '12가 3456(김민수 기사) 차량에 2-Opt 최적 경로를 바인딩하고 FCM 긴급 배차 알림(15분 타임아웃 타이머 가동)을 전송했습니다.',
+        time,
+        actionCard: {
+          title: '[TMS-02] 모바일 기사 배차 FCM 푸시 & 타임아웃 관제',
+          metrics: [
+            { label: '배차 대상', value: '12가 3456 (김민수)' },
+            { label: 'FCM 우선순위', value: 'HIGH_PRIORITY' },
+            { label: '응답 카운트다운', value: '15분 제한' },
+            { label: '타임아웃 감지', value: '15분 미응답 시 자동 경보' },
+          ],
+          buttonText: '기사 앱 배차 푸시 재전송',
+          onClickNotice: '김민수 기사님 단말기로 최적 배송 경로 푸시가 재전송되었습니다.',
+        },
+      };
     } else if (p.includes('송장') || p.includes('택배') || p.includes('cj') || p.includes('우체국')) {
       return {
         id: 'bot-' + Date.now(),
@@ -821,10 +876,28 @@ function AiLogisticsCopilot() {
       {/* 빠른 지시 칩 바 */}
       <div className="flex items-center gap-1.5 overflow-x-auto py-1 shrink-0 no-scrollbar">
         <button
+          onClick={() => handleSend('A급 순환재고실사 대사해줘')}
+          className="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] whitespace-nowrap border border-slate-700 transition"
+        >
+          📋 A급 순환재고실사
+        </button>
+        <button
+          onClick={() => handleSend('쇼핑몰 신규주문 수집해줘')}
+          className="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] whitespace-nowrap border border-slate-700 transition"
+        >
+          🛒 쇼핑몰 주문수집
+        </button>
+        <button
+          onClick={() => handleSend('기사 모바일 배차 푸시 전송해줘')}
+          className="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] whitespace-nowrap border border-slate-700 transition"
+        >
+          📲 기사 배차 푸시
+        </button>
+        <button
           onClick={() => handleSend('강남권역 CAPA 140% 초과 대책 수립해줘')}
           className="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] whitespace-nowrap border border-slate-700 transition"
         >
-          🚨 CAPA 140% 초과 대책
+          🚨 CAPA 140% 초과
         </button>
         <button
           onClick={() => handleSend('식탁세트 BOM 부품 부족 검증해줘')}
@@ -870,7 +943,274 @@ function AiLogisticsCopilot() {
 }
 
 /* =========================================================================
-   4. 실시간 차량 GPS 레이더 & 지오펜싱 도착 관제 그리드
+   4. 다채널 쇼핑몰 연동 허브 (Channel Order Gateway)
+   ========================================================================= */
+
+interface ChannelInfo {
+  id: string;
+  name: string;
+  badgeColor: string;
+  orderCountToday: number;
+  status: 'ACTIVE' | 'SYNCING';
+  lastSyncTime: string;
+  pendingInvoices: number;
+}
+
+function ChannelSyncHub() {
+  const [channels, setChannels] = useState<ChannelInfo[]>([
+    { id: 'NAVER', name: '네이버 스마트스토어', badgeColor: '#03C75A', orderCountToday: 34, status: 'ACTIVE', lastSyncTime: '09:25:10', pendingInvoices: 1 },
+    { id: 'COUPANG', name: '쿠팡 윙 (로켓그로스)', badgeColor: '#E01E26', orderCountToday: 48, status: 'ACTIVE', lastSyncTime: '09:24:45', pendingInvoices: 2 },
+    { id: '11ST', name: '11번가 오픈마켓', badgeColor: '#FF143C', orderCountToday: 12, status: 'ACTIVE', lastSyncTime: '09:20:12', pendingInvoices: 0 },
+    { id: 'KAKAO', name: '카카오 선물하기', badgeColor: '#FEE500', orderCountToday: 18, status: 'ACTIVE', lastSyncTime: '09:22:30', pendingInvoices: 0 },
+  ]);
+
+  const [syncing, setSyncing] = useState(false);
+  const [liveStreamOrders, setLiveStreamOrders] = useState([
+    { channel: '네이버', orderNo: 'NV-20261007-0094', product: '원목 4인 다이닝 세트', time: '방금 전', amount: '480,000원' },
+    { channel: '쿠팡', orderNo: 'CP-20261007-0182', product: '인체공학 메시 사무용 체어 2개', time: '1분 전', amount: '220,000원' },
+    { channel: '11번가', orderNo: '11-20261007-0031', product: '스마트 높낮이 전동 데스크', time: '3분 전', amount: '350,000원' },
+  ]);
+
+  const handleManualSync = () => {
+    setSyncing(true);
+    setTimeout(() => {
+      setSyncing(false);
+      const nowStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setChannels(prev => prev.map(c => ({
+        ...c,
+        orderCountToday: c.orderCountToday + Math.floor(Math.random() * 3 + 1),
+        lastSyncTime: nowStr
+      })));
+      setLiveStreamOrders(prev => [
+        { channel: '네이버', orderNo: `NV-${Date.now().toString().slice(-8)}`, product: '원목 체어 A세트 (추가수집)', time: '방금 전', amount: '120,000원' },
+        ...prev.slice(0, 3)
+      ]);
+    }, 900);
+  };
+
+  const handleSendInvoices = () => {
+    alert('모든 출고 완료 건(3건)의 송장번호가 쿠팡/네이버 API로 역전송 완료되었습니다.');
+    setChannels(prev => prev.map(c => ({ ...c, pendingInvoices: 0 })));
+  };
+
+  const totalOrders = channels.reduce((acc, c) => acc + c.orderCountToday, 0);
+  const totalPendingInvoices = channels.reduce((acc, c) => acc + c.pendingInvoices, 0);
+
+  return (
+    <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl backdrop-blur-md">
+      <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+        <div className="flex items-center gap-2">
+          <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <ShoppingCart size={18} />
+          </span>
+          <div>
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              쇼핑몰 다채널 실시간 수집 허브
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
+                OAuth 2.0 연동
+              </span>
+            </h3>
+            <p className="text-xs text-slate-400">네이버·쿠팡·11번가 신규 결제 주문 자동 수집 및 송장 역전송</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {totalPendingInvoices > 0 && (
+            <button
+              onClick={handleSendInvoices}
+              className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-semibold transition active:scale-95 flex items-center gap-1"
+            >
+              <CheckCheck size={13} />
+              <span>송장 역전송 ({totalPendingInvoices}건 대기)</span>
+            </button>
+          )}
+          <button
+            onClick={handleManualSync}
+            disabled={syncing}
+            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition active:scale-95 flex items-center gap-1 shadow-md shadow-indigo-600/20"
+          >
+            <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
+            <span>{syncing ? '수집중...' : '즉시 수집 (Sync Now)'}</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        {channels.map(c => (
+          <div key={c.id} className="p-3 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1">
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] font-bold text-white truncate">{c.name}</span>
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: c.badgeColor }} />
+            </div>
+            <div className="flex justify-between items-baseline pt-1">
+              <span className="text-[10px] text-slate-500">당일 수집</span>
+              <strong className="text-sm font-bold text-emerald-400 font-mono">{c.orderCountToday} 건</strong>
+            </div>
+            <p className="text-[9px] text-slate-500 truncate pt-0.5 border-t border-slate-900">
+              최근수집: {c.lastSyncTime}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="p-3 bg-slate-950/50 rounded-xl border border-slate-800/80">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1">
+            <Activity size={12} className="text-cyan-400" /> 실시간 수집 전표 스트림
+          </span>
+          <span className="text-[10px] text-slate-500 font-mono">총 {totalOrders}건 수집 완료 (대사율 100%)</span>
+        </div>
+        <div className="space-y-1.5">
+          {liveStreamOrders.map((ord, idx) => (
+            <div key={idx} className="flex justify-between items-center text-[11px] p-2 bg-slate-900/60 rounded-lg border border-slate-800/60 text-slate-300">
+              <div className="flex items-center gap-2">
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  {ord.channel}
+                </span>
+                <span className="font-mono text-indigo-200">{ord.orderNo}</span>
+                <span className="text-slate-400 max-w-[160px] truncate">{ord.product}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <strong className="text-emerald-400 font-mono">{ord.amount}</strong>
+                <span className="text-[10px] text-slate-500">{ord.time}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   5. WMS 순환 재고실사 디지털 관제 (Cycle Counting & Discrepancy Heatmap)
+   ========================================================================= */
+
+interface DiscrepancyItem {
+  id: string;
+  locCd: string;
+  productNm: string;
+  productCd: string;
+  systemQty: number;
+  countedQty: number;
+  diffQty: number;
+  diffType: 'SURPLUS' | 'SHORTAGE' | 'MATCH';
+  status: 'PENDING' | 'ADJUSTED';
+}
+
+function WmsCycleCountWidget() {
+  const [planStatus, setPlanStatus] = useState<'IN_PROGRESS' | 'APPROVED'>('IN_PROGRESS');
+  const [items, setItems] = useState<DiscrepancyItem[]>([
+    { id: '1', locCd: 'A-01-01', productNm: '원목 식탁 상판 (오크)', productCd: 'PROD-OAK-01', systemQty: 10, countedQty: 12, diffQty: 2, diffType: 'SURPLUS', status: 'PENDING' },
+    { id: '2', locCd: 'A-01-02', productNm: '원목 체어 A세트', productCd: 'PROD-CHAIR-01', systemQty: 20, countedQty: 18, diffQty: -2, diffType: 'SHORTAGE', status: 'PENDING' },
+  ]);
+
+  const handleApproveAdjust = () => {
+    setItems(prev => prev.map(it => ({ ...it, status: 'ADJUSTED' })));
+    setPlanStatus('APPROVED');
+    alert('[WMS-05] 순환실사 차이 승인 완료: T_WMS_STOCK_LEDGER 원장 수량이 실사 수량으로 즉시 보정되었습니다.');
+  };
+
+  return (
+    <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl backdrop-blur-md">
+      <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+        <div className="flex items-center gap-2">
+          <span className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <BarChart2 size={18} />
+          </span>
+          <div>
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              WMS 순환 재고실사 (Cycle Count)
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
+                planStatus === 'APPROVED'
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30 animate-pulse'
+              }`}>
+                {planStatus === 'APPROVED' ? '보정 완료 (APPROVED)' : '실사 대사중 (IN_PROGRESS)'}
+              </span>
+            </h3>
+            <p className="text-xs text-slate-400">ABC 등급별 고회전 SKU 일일 실사 및 전산 재고 원장 자동 일치화</p>
+          </div>
+        </div>
+
+        {planStatus === 'IN_PROGRESS' && (
+          <button
+            onClick={handleApproveAdjust}
+            className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:opacity-90 text-white rounded-xl text-xs font-bold transition active:scale-95 flex items-center gap-1 shadow-md shadow-emerald-600/20"
+          >
+            <ShieldAlert size={13} />
+            <span>차이 원장 보정 승인</span>
+          </button>
+        )}
+      </div>
+
+      <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800 space-y-2">
+        <div className="flex justify-between items-center text-xs">
+          <span className="text-slate-400">[IC01] A급 품목 일일 실사 진행률</span>
+          <strong className="text-indigo-300 font-mono">48 / 50 로케이션 (96%)</strong>
+        </div>
+        <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-2 rounded-full" style={{ width: '96%' }} />
+        </div>
+      </div>
+
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1">
+            <AlertTriangle size={12} className="text-amber-400" /> 실사 차이 발생 로케이션
+          </span>
+          <span className="text-[10px] text-slate-400">오차율: 4.2% (기준치 5% 이내)</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[11px] text-left">
+            <thead className="text-slate-400 border-b border-slate-800 pb-1">
+              <tr>
+                <th className="py-1.5 font-medium">로케이션</th>
+                <th className="py-1.5 font-medium">품목명 / 코드</th>
+                <th className="py-1.5 text-center font-medium">전산재고</th>
+                <th className="py-1.5 text-center font-medium">실사재고</th>
+                <th className="py-1.5 text-center font-medium">차이</th>
+                <th className="py-1.5 text-right font-medium">상태</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60 text-slate-300">
+              {items.map(it => (
+                <tr key={it.id}>
+                  <td className="py-2 font-mono font-bold text-indigo-300">{it.locCd}</td>
+                  <td className="py-2">
+                    <span className="text-white block font-medium">{it.productNm}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">{it.productCd}</span>
+                  </td>
+                  <td className="py-2 text-center font-mono">{it.systemQty}</td>
+                  <td className="py-2 text-center font-mono font-bold text-white">{it.countedQty}</td>
+                  <td className="py-2 text-center font-mono font-bold">
+                    <span className={it.diffQty > 0 ? 'text-cyan-400' : 'text-red-400'}>
+                      {it.diffQty > 0 ? `+${it.diffQty}` : it.diffQty}
+                    </span>
+                  </td>
+                  <td className="py-2 text-right">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                      it.status === 'ADJUSTED'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                        : it.diffType === 'SURPLUS'
+                        ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
+                        : 'bg-red-500/10 text-red-400 border border-red-500/30'
+                    }`}>
+                      {it.status === 'ADJUSTED' ? '원장보정 완료' : it.diffType === 'SURPLUS' ? '과다 (SURPLUS)' : '부족 (SHORTAGE)'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   6. 실시간 차량 GPS 레이더 & 지오펜싱 도착 관제 그리드
    ========================================================================= */
 
 interface LiveVehicle {
@@ -1023,7 +1363,17 @@ export default function ControlTowerPage() {
         {/* 2단: VRP 2-Opt 배송 경로 최적화 인터랙티브 맵 */}
         <VrpRouteMapViewer />
 
-        {/* 3단: 실시간 GPS 레이더 & 지오펜싱 도착 관제 그리드 */}
+        {/* 3단: 쇼핑몰 채널 수집 허브 & WMS 순환 재고실사 디지털 관제 */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-6">
+            <ChannelSyncHub />
+          </div>
+          <div className="lg:col-span-6">
+            <WmsCycleCountWidget />
+          </div>
+        </div>
+
+        {/* 4단: 실시간 GPS 레이더 & 지오펜싱 도착 관제 그리드 */}
         <LiveFleetRadar />
       </main>
     </div>
