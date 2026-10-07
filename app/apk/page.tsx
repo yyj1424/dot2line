@@ -63,6 +63,33 @@ export default function ApkDownloadPage() {
           </p>
         </div>
 
+        {/* 모바일 웹 PDA 스캐너 바로가기 배너 */}
+        <div className="mb-8 p-5 bg-gradient-to-r from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0">
+              <Warehouse size={24} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-white">웹 PDA 바코드 스캐너</h3>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
+                  무설치 즉시 사용
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                앱 설치 없이 모바일 브라우저에서 간선 입고 오도착 방지 검수, 순환 재고실사, 송장 체크섬 검증을 즉시 수행합니다.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/pda"
+            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20 active:scale-95 shrink-0"
+          >
+            <span>웹 PDA 실행</span>
+            <ExternalLink size={13} />
+          </Link>
+        </div>
+
         <div className="grid gap-4 sm:gap-6">
           {APPS.map((app) => {
             const Icon = app.icon;
