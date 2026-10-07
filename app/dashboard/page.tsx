@@ -8,7 +8,7 @@ import {
   Box, Truck, BarChart3, Users, LogOut, ShieldCheck,
   Building, Copy, Check, ExternalLink, Download,
   Calendar, Layers, AlertCircle, CheckCircle2, Search, ArrowRight, Sparkles,
-  ShoppingBag, ArrowUpRight, ThermometerSnowflake
+  ShoppingBag, ArrowUpRight, ThermometerSnowflake, Headphones
 } from 'lucide-react';
 
 /** 4개 탭 공통 — 브라우저의 Supabase access token을 같은 오리진의 프록시 라우트로 넘겨서
@@ -276,6 +276,14 @@ export default function DashboardPage() {
           </button>
 
           <button
+            onClick={() => router.push('/cs')}
+            className="w-full mt-2 flex items-center justify-center gap-1.5 py-2.5 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition"
+          >
+            <Headphones size={14} className="text-rose-400" />
+            <span>CS 클레임 & 구상 청구</span>
+          </button>
+
+          <button
             onClick={() => router.push('/apk')}
             className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs font-medium transition"
           >
@@ -384,6 +392,13 @@ export default function DashboardPage() {
           className="w-full flex items-center justify-center gap-2 py-2.5 mb-2 bg-slate-900 border border-cyan-500/30 text-cyan-300 rounded-xl text-xs font-bold transition shadow-sm active:scale-95 md:hidden"
         >
           <ThermometerSnowflake size={14} className="text-cyan-400" /> 스마트 콜드체인 & IoT 관제
+        </button>
+
+        <button
+          onClick={() => router.push('/cs')}
+          className="w-full flex items-center justify-center gap-2 py-2.5 mb-2 bg-slate-900 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-bold transition shadow-sm active:scale-95 md:hidden"
+        >
+          <Headphones size={14} className="text-rose-400" /> CS 클레임 & 보상 관제
         </button>
 
         <button
