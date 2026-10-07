@@ -5,7 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { ArrowRight, Box, Truck, Users, ShieldCheck, Lock, KeyRound, Smartphone, PackageSearch, ClipboardCheck } from 'lucide-react';
+import {
+  ArrowRight, Box, Truck, Users, ShieldCheck, Lock, KeyRound,
+  Smartphone, PackageSearch, ClipboardCheck, Sparkles, BarChart3,
+  ThermometerSnowflake, Calculator, ShoppingBag, Leaf
+} from 'lucide-react';
 
 type PreviewScreen = {
   label: string;
@@ -49,9 +53,26 @@ export default function LandingPage() {
       {/* 1. 네비게이션 */}
       <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <Link href="/" className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
               DOT2LINE
+            </Link>
+            <div className="hidden lg:flex items-center gap-4 text-xs font-semibold text-slate-300">
+              <Link href="/control-tower" className="hover:text-indigo-400 transition flex items-center gap-1">
+                <Sparkles size={12} className="text-indigo-400" /> AI 3D 관제
+              </Link>
+              <Link href="/analytics" className="hover:text-emerald-400 transition flex items-center gap-1">
+                <BarChart3 size={12} className="text-emerald-400" /> 경영/ESG
+              </Link>
+              <Link href="/coldchain" className="hover:text-cyan-400 transition flex items-center gap-1">
+                <ThermometerSnowflake size={12} className="text-cyan-400" /> 콜드체인 IoT
+              </Link>
+              <Link href="/quotation" className="hover:text-amber-400 transition flex items-center gap-1">
+                <Calculator size={12} className="text-amber-400" /> 자동 견적
+              </Link>
+              <Link href="/track" className="hover:text-slate-100 transition">
+                배송 조회
+              </Link>
             </div>
             <Link
               href="/apk"
@@ -106,33 +127,59 @@ export default function LandingPage() {
             >
               무료로 사용해 보기 <ArrowRight size={18} />
             </Link>
-            <a
-              href="#faq"
-              className="w-full sm:w-auto px-7 py-3.5 border border-slate-700 hover:bg-slate-900 rounded-full font-bold text-base sm:text-lg transition active:scale-95 text-slate-300 hover:text-white text-center"
+            <Link
+              href="/control-tower"
+              className="w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-indigo-900/60 to-cyan-900/60 border border-indigo-500/40 hover:border-indigo-400 rounded-full font-bold text-base sm:text-lg transition active:scale-95 text-indigo-300 hover:text-white flex items-center justify-center gap-2"
             >
-              더 알아보기
-            </a>
+              <Sparkles size={18} className="text-cyan-400" />
+              <span>AI 3D 관제 센터 체험</span>
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* 4. 핵심 기능 (Features) */}
+      {/* 4. 핵심 기능 (6대 엔터프라이즈 물류 도메인) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-1.5 mb-3 px-3 py-1 border border-indigo-500/30 rounded-full bg-indigo-500/10 text-indigo-400 text-xs sm:text-sm font-semibold">
+            <Sparkles size={14} /> End-to-End Enterprise Logistics
+          </div>
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-white">물류 전 도메인을 아우르는 6대 지능형 엔진</h2>
+          <p className="text-slate-400 text-xs sm:text-sm mt-2 max-w-xl mx-auto">
+            주문 접수부터 창고 보관, 다거점 분할, VRP 배송, IoT 콜드체인, 정산 및 ESG 보고서까지 단 하나의 플랫폼에서 가동됩니다.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <FeatureCard 
-            icon={<Users className="text-indigo-400" size={24} />}
-            title="통합 기준정보 (MDM)"
-            desc="전사 물류 인프라 데이터를 단일화하여 데이터 정합성을 보장합니다."
+            icon={<ShoppingBag className="text-indigo-400" size={24} />}
+            title="통합 주문 관리 (OMS)"
+            desc="네이버·쿠팡 다채널 주문 자동 수집, 이천/용인 다거점 재고 분할 출고, 대용량 엑셀 청크 배치 비동기 파싱."
           />
           <FeatureCard 
             icon={<Box className="text-purple-400" size={24} />}
             title="지능형 창고 관리 (WMS)"
-            desc="재고의 입출고 흐름을 실시간으로 추적하고 로케이션을 최적화합니다."
+            desc="BOM 세트 부분출고 원천 차단, A/B/C 순환 재고실사(Cycle Count), 간선 오도착 방지 바코드 스캐너."
           />
           <FeatureCard 
             icon={<Truck className="text-cyan-400" size={24} />}
-            title="수송/배송 관리 (TMS)"
-            desc="최적의 배차 경로와 실시간 GPS 관제로 배송 효율을 극대화합니다."
+            title="수배송 & 2-Opt 배차 (TMS)"
+            desc="2-Opt 휴리스틱 경로 최적화(-19.3% 단축), 1T~25T 표준 운임 매트릭스, 기사 FCM 배차 푸시 & 15분 타임아웃 경보."
+          />
+          <FeatureCard 
+            icon={<Sparkles className="text-amber-400" size={24} />}
+            title="AI 3D 디지털 트윈 관제"
+            desc="트럭 360° 3D 큐빙 적재 시뮬레이터, 창고 랙 골든존 슬로팅 디지털 트윈, 실시간 500m 지오펜싱 도착 레이더."
+          />
+          <FeatureCard 
+            icon={<ThermometerSnowflake className="text-blue-400" size={24} />}
+            title="스마트 콜드체인 & IoT"
+            desc="냉장·냉동 특장차 실시간 무선 텔레메트리, 식약처 타코메타 온도기록증 발급, 이상 고온 시 콤프레셔 원격 강제 가동."
+          />
+          <FeatureCard 
+            icon={<Leaf className="text-emerald-400" size={24} />}
+            title="ESG 분석 & 정산/전자계약"
+            desc="주행거리 단축 탄소 감축량(CO₂-eq) 산출, 국세청 KS X 1006 전자세금계산서, 표준 물류 위탁 전자 계약 및 단가 원장 연계."
           />
         </div>
       </section>
