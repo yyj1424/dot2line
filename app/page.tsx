@@ -155,31 +155,43 @@ export default function LandingPage() {
             icon={<ShoppingBag className="text-indigo-400" size={24} />}
             title="통합 주문 관리 (OMS)"
             desc="네이버·쿠팡 다채널 주문 자동 수집, 이천/용인 다거점 재고 분할 출고, 대용량 엑셀 청크 배치 비동기 파싱."
+            href="/dashboard"
+            linkText="주문 관리 대시보드 보기"
           />
           <FeatureCard 
             icon={<Box className="text-purple-400" size={24} />}
             title="지능형 창고 관리 (WMS)"
             desc="BOM 세트 부분출고 원천 차단, A/B/C 순환 재고실사(Cycle Count), 간선 오도착 방지 바코드 스캐너."
+            href="/pda"
+            linkText="모바일 웹 PDA 스캐너 체험"
           />
           <FeatureCard 
             icon={<Truck className="text-cyan-400" size={24} />}
             title="수배송 & 2-Opt 배차 (TMS)"
             desc="2-Opt 휴리스틱 경로 최적화(-19.3% 단축), 1T~25T 표준 운임 매트릭스, 기사 FCM 배차 푸시 & 15분 타임아웃 경보."
+            href="/pod"
+            linkText="기사용 웹 POD 콘솔 체험"
           />
           <FeatureCard 
             icon={<Sparkles className="text-amber-400" size={24} />}
             title="AI 3D 디지털 트윈 관제"
             desc="트럭 360° 3D 큐빙 적재 시뮬레이터, 창고 랙 골든존 슬로팅 디지털 트윈, 실시간 500m 지오펜싱 도착 레이더."
+            href="/control-tower"
+            linkText="3D 통합 관제 센터 체험"
           />
           <FeatureCard 
             icon={<ThermometerSnowflake className="text-blue-400" size={24} />}
             title="스마트 콜드체인 & IoT"
             desc="냉장·냉동 특장차 실시간 무선 텔레메트리, 식약처 타코메타 온도기록증 발급, 이상 고온 시 콤프레셔 원격 강제 가동."
+            href="/coldchain"
+            linkText="콜드체인 관제 센터 보기"
           />
           <FeatureCard 
             icon={<Leaf className="text-emerald-400" size={24} />}
             title="ESG 분석 & 정산/전자계약"
             desc="주행거리 단축 탄소 감축량(CO₂-eq) 산출, 국세청 KS X 1006 전자세금계산서, 표준 물류 위탁 전자 계약 및 단가 원장 연계."
+            href="/analytics"
+            linkText="경영 BI & ESG 분석 리포트"
           />
         </div>
       </section>
@@ -199,16 +211,22 @@ export default function LandingPage() {
             icon={<Truck className="text-indigo-400" size={24} />}
             title="수송 기사 앱"
             desc="배차 목록과 상·하차지 정보를 확인하고, 입차부터 수송완료까지 단계별로 처리합니다. 실시간 위치 전송으로 도착 여부를 자동 확인합니다."
+            href="/apk"
+            linkText="APK 다운로드 바로가기"
           />
           <FeatureCard
             icon={<PackageSearch className="text-purple-400" size={24} />}
-            title="배송 기사 앱"
-            desc="오늘의 배송 목록과 상차 스캔, 배송완료·연기·취소·반품회수까지 현장에서 바로 처리합니다."
+            title="배송 기사 앱 (웹 POD)"
+            desc="오늘의 배송 목록과 상차 스캔, 현장 사진 촬영, 고객 터치 서명, 배송완료·연기·취소·반품회수까지 브라우저에서 바로 처리합니다."
+            href="/pod"
+            linkText="무설치 웹 POD 바로가기"
           />
           <FeatureCard
             icon={<ClipboardCheck className="text-cyan-400" size={24} />}
-            title="창고 작업자 앱(WMS)"
-            desc="입고·피킹·출고 작업 지시를 스캔 기반으로 확인하고 처리 결과를 실시간으로 반영합니다."
+            title="창고 작업자 앱 (웹 PDA)"
+            desc="입고·피킹·출고 작업 지시를 스캔 기반으로 확인하고 간선 오도착 방지 및 순환 실사 결과를 실시간으로 반영합니다."
+            href="/pda"
+            linkText="무설치 웹 PDA 스캐너 바로가기"
           />
         </div>
       </section>
@@ -382,14 +400,37 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+function FeatureCard({
+  icon,
+  title,
+  desc,
+  href,
+  linkText,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  href?: string;
+  linkText?: string;
+}) {
   return (
-    <div className="p-6 sm:p-8 bg-slate-900/40 border border-slate-800/80 rounded-2xl hover:border-slate-700 transition flex flex-col items-start">
-      <div className="w-11 h-11 sm:w-12 sm:h-12 bg-slate-800/70 border border-slate-700/50 rounded-xl flex items-center justify-center mb-5">
-        {icon}
+    <div className="p-6 sm:p-8 bg-slate-900/40 border border-slate-800/80 rounded-2xl hover:border-slate-700 transition flex flex-col justify-between items-start group">
+      <div>
+        <div className="w-11 h-11 sm:w-12 sm:h-12 bg-slate-800/70 border border-slate-700/50 rounded-xl flex items-center justify-center mb-5 group-hover:scale-105 transition">
+          {icon}
+        </div>
+        <h3 className="text-lg sm:text-xl font-bold mb-2 text-slate-100 break-keep">{title}</h3>
+        <p className="text-slate-400 text-xs sm:text-sm leading-relaxed break-keep mb-4">{desc}</p>
       </div>
-      <h3 className="text-lg sm:text-xl font-bold mb-2 text-slate-100 break-keep">{title}</h3>
-      <p className="text-slate-400 text-xs sm:text-sm leading-relaxed break-keep">{desc}</p>
+      {href && (
+        <Link
+          href={href}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition"
+        >
+          <span>{linkText || '체험하기'}</span>
+          <ArrowRight size={13} />
+        </Link>
+      )}
     </div>
   );
 }
