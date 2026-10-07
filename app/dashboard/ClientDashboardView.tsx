@@ -6,7 +6,7 @@ import {
   Truck, LogOut, ExternalLink, Calendar, Layers,
   CheckCircle2, Search, FileText, Download, AlertTriangle, Sparkles,
   Camera, UploadCloud, RotateCcw, X, Check, ArrowRight, ShieldCheck,
-  MapPin, User, FileSpreadsheet, Eye, AlertCircle
+  MapPin, User, FileSpreadsheet, Eye, AlertCircle, Calculator
 } from 'lucide-react';
 
 interface UserOrgInfo {
@@ -459,6 +459,13 @@ export default function ClientDashboardView({
               className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition"
             >
               API 연동키 관리
+            </button>
+            <button
+              onClick={() => router.push('/quotation')}
+              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition flex items-center gap-1.5"
+            >
+              <Calculator size={13} className="text-amber-400" />
+              <span>물류 자동 견적</span>
             </button>
             <button
               onClick={() => setSubTab('batch')}
