@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
+import ResendVerificationButton from '../ResendVerificationButton';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -203,6 +204,10 @@ export default function SignupPage() {
               <span className="font-semibold text-white">{email}</span> 주소로 확인 링크를 보내드렸습니다.<br />
               이메일함에서 인증 링크를 클릭하신 후 로그인해 주세요.
             </p>
+            <p className="text-xs text-indigo-300/60">
+              메일이 보이지 않으면 스팸함을 확인하거나 아래 버튼으로 다시 받아 보세요.
+            </p>
+            <ResendVerificationButton email={email} />
             <Link
               href="/login"
               className="block w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-lg transition mt-4"

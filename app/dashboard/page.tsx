@@ -3,13 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import ClientDashboardView from './ClientDashboardView';
 import {
   Box, Truck, BarChart3, Users, LogOut, ShieldCheck,
-  Building, Copy, Check, ExternalLink, Download,
-  Calendar, Layers, AlertCircle, CheckCircle2, Search, ArrowRight, Sparkles,
-  ShoppingBag, ArrowUpRight, ThermometerSnowflake, Headphones,
-  Calculator, Handshake
+  Building, Copy, Check, ExternalLink, Download
 } from 'lucide-react';
 
 /** 4개 탭 공통 — 브라우저의 Supabase access token을 같은 오리진의 프록시 라우트로 넘겨서
@@ -53,7 +49,7 @@ interface UserOrgInfo {
   clientMasterNm?: string | null;
 }
 
-type TabType = 'MDM' | 'OMS' | 'WMS' | 'TMS' | 'SETTLEMENT';
+type TabType = 'MDM' | 'WMS' | 'TMS' | 'SETTLEMENT';
 
 export default function DashboardPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -166,14 +162,33 @@ export default function DashboardPage() {
     );
   }
 
+  // 화주사 담당자(client)는 이 4개 탭이 전부 조직 전체(다른 화주사 포함) 운영/매출 데이터라 볼 수
+  // 없다 — 서버(transys2 대시보드 API)도 동일하게 403으로 막지만, 화면 자체를 아예 다르게 보여준다.
   if (orgInfo?.role === 'client') {
     return (
-      <ClientDashboardView
-        orgInfo={orgInfo}
-        userEmail={userEmail}
-        onOpenSpring={handleOpenSpringService}
-        onLogout={handleLogout}
-      />
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-center space-y-4">
+          <Building size={28} className="mx-auto text-indigo-400" />
+          <h1 className="text-lg font-bold text-white">{orgInfo.orgName}</h1>
+          <p className="text-sm text-slate-400">
+            화주사 담당자 계정은 조직 전체 운영 현황 대시보드를 볼 수 없습니다.<br />
+            주문 조회·등록은 메인 시스템에서 이용해 주세요.
+          </p>
+          <button
+            onClick={() => handleOpenSpringService('/')}
+            className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition shadow-lg shadow-indigo-600/20"
+          >
+            <span>메인 시스템 접속</span>
+            <ExternalLink size={14} />
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full py-2 bg-slate-800/80 hover:bg-red-950/40 hover:text-red-400 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5"
+          >
+            <LogOut size={13} /> 로그아웃
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -226,12 +241,6 @@ export default function DashboardPage() {
               onClick={() => setActiveTab('MDM')} 
             />
             <SidebarTabBtn 
-              icon={<ShoppingBag size={18} />} 
-              text="주문 관리 (OMS)" 
-              active={activeTab === 'OMS'} 
-              onClick={() => setActiveTab('OMS')} 
-            />
-            <SidebarTabBtn 
               icon={<Box size={18} />} 
               text="창고 관리 (WMS)" 
               active={activeTab === 'WMS'} 
@@ -254,47 +263,8 @@ export default function DashboardPage() {
           </nav>
 
           <button
-            onClick={() => router.push('/control-tower')}
-            className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-indigo-600 via-cyan-600 to-emerald-600 hover:opacity-95 text-white rounded-lg text-xs font-bold transition shadow-md shadow-indigo-500/20 active:scale-95"
-          >
-            <Sparkles size={14} /> AI 관제 타워 (3D)
-          </button>
-
-          <button
-            onClick={() => router.push('/analytics')}
-            className="w-full mt-2 flex items-center justify-center gap-1.5 py-2.5 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition"
-          >
-            <BarChart3 size={14} className="text-emerald-400" />
-            <span>경영 분석 및 ESG 리포트</span>
-          </button>
-
-          <button
-            onClick={() => router.push('/coldchain')}
-            className="w-full mt-2 flex items-center justify-center gap-1.5 py-2.5 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition"
-          >
-            <ThermometerSnowflake size={14} className="text-cyan-400" />
-            <span>스마트 콜드체인 & IoT 관제</span>
-          </button>
-
-          <button
-            onClick={() => router.push('/cs')}
-            className="w-full mt-2 flex items-center justify-center gap-1.5 py-2.5 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition"
-          >
-            <Headphones size={14} className="text-rose-400" />
-            <span>CS 클레임 & 구상 청구</span>
-          </button>
-
-          <button
-            onClick={() => router.push('/quotation')}
-            className="w-full mt-2 flex items-center justify-center gap-1.5 py-2.5 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition"
-          >
-            <Calculator size={14} className="text-amber-400" />
-            <span>물류 견적 & 전자 계약</span>
-          </button>
-
-          <button
             onClick={() => router.push('/apk')}
-            className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs font-medium transition"
+            className="w-full mt-3 flex items-center justify-center gap-1.5 py-2 bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs font-medium transition"
           >
             <Download size={13} /> 앱 다운로드
           </button>
@@ -346,19 +316,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 모바일 전용 그리드 메뉴 탭 */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:hidden mb-4">
+        {/* 모바일 전용 2x2 그리드 메뉴 탭 */}
+        <div className="grid grid-cols-2 gap-2 md:hidden mb-4">
           <MobileTabButton
             active={activeTab === 'MDM'}
             label="기준정보 (MDM)"
             icon={<Users size={15} />}
             onClick={() => setActiveTab('MDM')}
-          />
-          <MobileTabButton
-            active={activeTab === 'OMS'}
-            label="주문 관리 (OMS)"
-            icon={<ShoppingBag size={15} />}
-            onClick={() => setActiveTab('OMS')}
           />
           <MobileTabButton
             active={activeTab === 'WMS'}
@@ -383,41 +347,6 @@ export default function DashboardPage() {
         </div>
 
         <button
-          onClick={() => router.push('/control-tower')}
-          className="w-full flex items-center justify-center gap-2 py-2.5 mb-2 bg-gradient-to-r from-indigo-600 via-cyan-600 to-emerald-600 hover:opacity-95 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-500/20 active:scale-95 md:hidden"
-        >
-          <Sparkles size={14} /> AI 관제 타워 & 3D 적재 시뮬레이터
-        </button>
-
-        <button
-          onClick={() => router.push('/analytics')}
-          className="w-full flex items-center justify-center gap-2 py-2.5 mb-2 bg-slate-900 border border-emerald-500/30 text-emerald-300 rounded-xl text-xs font-bold transition shadow-sm active:scale-95 md:hidden"
-        >
-          <BarChart3 size={14} className="text-emerald-400" /> 경영 분석 & ESG 리포트
-        </button>
-
-        <button
-          onClick={() => router.push('/coldchain')}
-          className="w-full flex items-center justify-center gap-2 py-2.5 mb-2 bg-slate-900 border border-cyan-500/30 text-cyan-300 rounded-xl text-xs font-bold transition shadow-sm active:scale-95 md:hidden"
-        >
-          <ThermometerSnowflake size={14} className="text-cyan-400" /> 스마트 콜드체인 & IoT 관제
-        </button>
-
-        <button
-          onClick={() => router.push('/cs')}
-          className="w-full flex items-center justify-center gap-2 py-2.5 mb-2 bg-slate-900 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-bold transition shadow-sm active:scale-95 md:hidden"
-        >
-          <Headphones size={14} className="text-rose-400" /> CS 클레임 & 보상 관제
-        </button>
-
-        <button
-          onClick={() => router.push('/quotation')}
-          className="w-full flex items-center justify-center gap-2 py-2.5 mb-2 bg-slate-900 border border-amber-500/30 text-amber-300 rounded-xl text-xs font-bold transition shadow-sm active:scale-95 md:hidden"
-        >
-          <Calculator size={14} className="text-amber-400" /> 통합 견적 & 전자 계약
-        </button>
-
-        <button
           onClick={() => router.push('/apk')}
           className="w-full flex items-center justify-center gap-1.5 py-2.5 mb-6 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition md:hidden"
         >
@@ -429,7 +358,6 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-lg sm:text-2xl font-extrabold text-white">
               {activeTab === 'MDM' && '기준정보 관리 현황 (MDM)'}
-              {activeTab === 'OMS' && '통합 주문 관리 현황 (OMS)'}
               {activeTab === 'WMS' && '창고 및 재고 운영 현황 (WMS)'}
               {activeTab === 'TMS' && '수배송 및 배차 관제 (TMS)'}
               {activeTab === 'SETTLEMENT' && '통합 정산 및 마감 현황'}
@@ -458,7 +386,6 @@ export default function DashboardPage() {
 
         {/* ================= 탭별 현황 화면 ================= */}
         {activeTab === 'MDM' && <MdmView />}
-        {activeTab === 'OMS' && <OmsView />}
         {activeTab === 'WMS' && <WmsView />}
         {activeTab === 'TMS' && <TmsView />}
         {activeTab === 'SETTLEMENT' && <SettlementView />}
@@ -568,143 +495,7 @@ function MdmView() {
   );
 }
 
-/* ================== 2. 주문 관리 (OMS) 현황 ================== */
-interface OmsRecentOrderRow {
-  orderNo: string;
-  channelNm: string;
-  channelOrderNo: string;
-  consigneeNm: string;
-  deliveryAddr: string;
-  productSummary: string;
-  assignedCenterNm: string;
-  promisedDeliveryDate: string;
-  orderStatus: string;
-  orderStatusNm: string;
-  totalAmt: number;
-}
-
-interface OmsChannelShare {
-  channelNm: string;
-  count: number;
-  sharePercent: number;
-}
-
-interface OmsSummary {
-  todayOrderTotal: number;
-  todayOrderConfirmed: number;
-  channelOrderCount: number;
-  splitOrderCount: number;
-  returnOrderCount: number;
-  atpPassRate: number;
-  channelBreakdown: OmsChannelShare[];
-  recentOrders: OmsRecentOrderRow[];
-}
-
-const OMS_STATUS_BADGE: Record<string, string> = {
-  SPLIT_CONFIRMED: 'bg-purple-500/10 text-purple-400 border border-purple-500/30',
-  ALLOCATED: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30',
-  PICKING: 'bg-amber-500/10 text-amber-400 border border-amber-500/30',
-  DELIVERING: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30',
-  RETURN_PICKUP: 'bg-rose-500/10 text-rose-400 border border-rose-500/30',
-};
-
-function OmsView() {
-  const { data, loading, error } = useDashboardSummary<OmsSummary>('oms-summary');
-  const router = useRouter();
-
-  if (loading) return <ViewLoading label="주문 관리 데이터 불러오는 중..." />;
-  if (error || !data) return <ViewError message={error} />;
-
-  return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <SummaryCard title="금일 신규 접수 주문" value={`${data.todayOrderTotal} 건`} sub={`정상 주문확정 ${data.todayOrderConfirmed}건`} color="indigo" />
-        <SummaryCard title="다채널 자동 수집" value={`${data.channelOrderCount} 건`} sub="네이버/쿠팡/11번가 실시간" color="sky" />
-        <SummaryCard title="다거점 자동 분할" value={`${data.splitOrderCount} 건`} sub="이천·용인 복합 거점 출고" color="purple" />
-        <SummaryCard title="납기약속(ATP) 확약률" value={`${data.atpPassRate} %`} sub={`역물류 반품 회수 ${data.returnOrderCount}건`} color="emerald" />
-      </div>
-
-      {/* 다채널 수집 점유율 & 퀵 액션 카드 */}
-      <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-3">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div>
-            <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
-              <ShoppingBag size={15} className="text-indigo-400" /> 쇼핑몰 다채널 연동 점유율 및 파이프라인
-            </h4>
-            <p className="text-xs text-slate-400">당일 자동 수집된 주문의 유입 채널별 비중</p>
-          </div>
-          <button
-            onClick={() => router.push('/control-tower')}
-            className="px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-cyan-600 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1 shadow-sm active:scale-95"
-          >
-            <Sparkles size={12} />
-            <span>AI 관제 센터에서 보기</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-          {data.channelBreakdown?.map((ch, idx) => (
-            <div key={idx} className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80 flex justify-between items-center">
-              <div>
-                <span className="text-xs font-semibold text-slate-300 block">{ch.channelNm}</span>
-                <span className="text-[10px] text-slate-500 font-mono">점유율 {ch.sharePercent}%</span>
-              </div>
-              <strong className="text-sm font-bold text-indigo-300 font-mono">{ch.count} 건</strong>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 최근 OMS 주문 전표 및 분할/ATP 상태 목록 */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 sm:p-5">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-sm font-bold text-slate-200">최근 OMS 주문 전표 및 분할·ATP 현황</h3>
-          <span className="text-xs text-slate-500 font-mono">실시간 5건 표출</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="text-slate-400 border-b border-slate-800 pb-2">
-              <tr>
-                <th className="py-2 font-medium">주문번호 / 채널</th>
-                <th className="py-2 font-medium">수취인 / 배송지</th>
-                <th className="py-2 font-medium">주문 상품</th>
-                <th className="py-2 font-medium">출고 거점 센터</th>
-                <th className="py-2 font-medium">약속배송일 (ATP)</th>
-                <th className="py-2 font-medium">금액</th>
-                <th className="py-2 font-medium text-right">상태</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              {data.recentOrders?.map((row) => (
-                <tr key={row.orderNo} className="hover:bg-slate-800/30 transition">
-                  <td className="py-2.5 font-mono">
-                    <span className="font-bold text-indigo-300 block">{row.orderNo}</span>
-                    <span className="text-[10px] text-slate-500">{row.channelNm} ({row.channelOrderNo})</span>
-                  </td>
-                  <td className="py-2.5">
-                    <span className="font-medium text-white block">{row.consigneeNm}</span>
-                    <span className="text-slate-400 text-[10px] max-w-xs truncate block">{row.deliveryAddr}</span>
-                  </td>
-                  <td className="py-2.5 text-slate-200">{row.productSummary}</td>
-                  <td className="py-2.5 text-cyan-300 font-medium">{row.assignedCenterNm}</td>
-                  <td className="py-2.5 font-mono text-slate-300">{row.promisedDeliveryDate}</td>
-                  <td className="py-2.5 font-mono text-emerald-400 font-semibold">₩ {row.totalAmt.toLocaleString()}</td>
-                  <td className="py-2.5 text-right">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${OMS_STATUS_BADGE[row.orderStatus] || 'bg-slate-800 text-slate-300'}`}>
-                      {row.orderStatusNm}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ================== 3. 창고 관리 (WMS) 현황 ================== */
+/* ================== 2. 창고 관리 (WMS) 현황 ================== */
 interface WmsCenterRow { centerCd: string; centerNm: string; usableCount: number; usedCount: number; inboundCount: number; outboundCount: number; rate: number }
 interface WmsSummary {
   storageRate: number; usableLocationCount: number; usedLocationCount: number;

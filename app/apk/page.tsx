@@ -63,61 +63,6 @@ export default function ApkDownloadPage() {
           </p>
         </div>
 
-        {/* 모바일 웹 현장 도구 바로가기 배너 그리드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <div className="p-4 sm:p-5 bg-gradient-to-br from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/30 rounded-2xl flex flex-col justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0">
-                <Warehouse size={22} />
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <h3 className="text-sm sm:text-base font-bold text-white">WMS 모바일 웹 PDA</h3>
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
-                    무설치
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  간선 입고 오도착 방지 검수, 순환 재고실사, 택배 송장 체크섬
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/pda"
-              className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-md shadow-indigo-600/20 active:scale-95"
-            >
-              <span>웹 PDA 실행</span>
-              <ExternalLink size={13} />
-            </Link>
-          </div>
-
-          <div className="p-4 sm:p-5 bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-900 border border-emerald-500/30 rounded-2xl flex flex-col justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                <Truck size={22} />
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <h3 className="text-sm sm:text-base font-bold text-white">배송기사용 웹 POD</h3>
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-semibold">
-                    전자 인수증
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  문앞 현장 사진 촬영, 고객 터치 서명, 1-Click 배송완료
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/pod"
-              className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-md shadow-emerald-600/20 active:scale-95"
-            >
-              <span>웹 POD 실행</span>
-              <ExternalLink size={13} />
-            </Link>
-          </div>
-        </div>
-
         <div className="grid gap-4 sm:gap-6">
           {APPS.map((app) => {
             const Icon = app.icon;

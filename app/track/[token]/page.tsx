@@ -17,11 +17,6 @@ import {
   ExternalLink,
   ShieldCheck,
   ChevronRight,
-  Star,
-  ThumbsUp,
-  RotateCcw,
-  Check,
-  X,
 } from 'lucide-react';
 
 interface DeliveryTrackData {
@@ -68,56 +63,6 @@ export default function DeliveryTrackPage({
   const [refreshing, setRefreshing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activePhoto, setActivePhoto] = useState<number | null>(null);
-  const [photoLoadError, setPhotoLoadError] = useState(false);
-
-  // 고객 만족도 평가 상태
-  const [rating, setRating] = useState(5);
-  const [selectedTags, setSelectedTags] = useState<string[]>(['정시 배송', '문앞 비대면 완벽']);
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
-
-  // 고객 반품/교환 접수 모달 상태
-  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
-  const [returnSubmitting, setReturnSubmitting] = useState(false);
-  const [returnResult, setReturnResult] = useState<any>(null);
-  const [returnReason, setReturnReason] = useState('CUSTOMER_MIND_CHANGE');
-  const [returnMemo, setReturnMemo] = useState('');
-
-  const handleReturnSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!data) return;
-    setReturnSubmitting(true);
-    try {
-      const res = await fetch('/api/oms/returns/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orgCode: data.orgCode || 'ORG01',
-          clientCd: 'CLI01',
-          originalOrderNo: data.orderNo,
-          consigneeNm: data.consigneeNm,
-          consigneeTel: data.consigneeTel,
-          pickupAddr: `${data.addrM} ${data.addrD || ''}`.trim(),
-          destCenterCd: 'IC01',
-          returnReasonCode: returnReason,
-          memo: returnMemo,
-          items: [
-            {
-              productCd: 'PROD-01',
-              productNm: data.productSummary || '배송 상품',
-              returnQty: 1,
-              itemRemark: returnMemo,
-            },
-          ],
-        }),
-      });
-      const json = await res.json();
-      setReturnResult(json);
-    } catch {
-      alert('반품 접수 처리 중 오류가 발생했습니다.');
-    } finally {
-      setReturnSubmitting(false);
-    }
-  };
 
   const fetchTracking = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -348,15 +293,15 @@ export default function DeliveryTrackPage({
               </div>
             )}
 
-            {/* 3. 배송 완료 증빙 및 전자 인수증 카드 (C02) */}
+            {/* 3. 배송 완료 증빙 카드 (완료 시) */}
             {currentStep === 4 && (
-              <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-4">
+              <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-                    <Camera size={15} className="text-emerald-400" /> 배송 완료 증빙 & 전자 인수증
+                    <Camera size={15} className="text-emerald-400" /> 배송 완료 증빙
                   </h3>
                   {data.completedAt && (
-                    <span className="text-xs text-slate-400 font-mono">{data.completedAt}</span>
+                    <span className="text-xs text-slate-400">{data.completedAt}</span>
                   )}
                 </div>
 
@@ -366,135 +311,26 @@ export default function DeliveryTrackPage({
                   </p>
                 )}
 
-                {/* 현장 증빙 사진 뷰어 또는 정밀 디지털 트윈 캔버스 */}
-                <div className="w-full h-52 bg-slate-950 rounded-xl overflow-hidden border border-slate-800 relative flex items-center justify-center">
-                  {!photoLoadError && data.photoIds && data.photoIds.length > 0 ? (
-                    <button
-                      onClick={() => setActivePhoto(data.photoIds![0])}
-                      className="w-full h-full relative group cursor-pointer"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={`/api/track/photo/${data.photoIds[0]}`}
-                        alt="배송 완료 현장 사진"
-                        className="w-full h-full object-cover group-hover:scale-105 transition"
-                        onError={() => setPhotoLoadError(true)}
-                      />
-                      <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 text-xs text-white font-semibold transition">
-                        <ExternalLink size={16} /> 사진 크게 보기
-                      </div>
-                    </button>
-                  ) : (
-                    /* 현장 사진 미존재/로딩 오류 시 GPS & 전자서명 인증 캔버스 */
-                    <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-b from-slate-900 to-slate-950 text-center relative select-none">
-                      <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold">
-                        <CheckCircle2 size={11} />
-                        <span>GPS 현장 인증 완료</span>
-                      </div>
-                      <div className="absolute top-3 right-3 text-[10px] font-mono text-slate-400">
-                        {data.driverLat ? `${data.driverLat}° N, ${data.driverLng}° E` : '37.4979° N, 127.0276° E'}
-                      </div>
-                      <div className="w-16 h-16 mb-2 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-                        <Camera size={28} className="opacity-80" />
-                      </div>
-                      <p className="text-xs font-semibold text-slate-200">
-                        [현관 앞 비대면 배송] 직촬영 보관 완료
-                      </p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        촬영일시: {data.completedAt || data.deliveryDt}
-                      </p>
-                      <div className="mt-2 text-[10px] px-2.5 py-0.5 rounded bg-slate-800 text-emerald-400 font-mono flex items-center gap-1">
-                        <ShieldCheck size={11} />
-                        <span>고객 비대면 전자 인수증 발급 완료 (위변조 방지)</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 반품/교환 바로가기 액션 */}
-                <div className="pt-1 flex justify-end">
-                  <button
-                    onClick={() => {
-                      setReturnResult(null);
-                      setIsReturnModalOpen(true);
-                    }}
-                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5"
-                  >
-                    <RotateCcw size={13} />
-                    <span>반품 / 교환 접수 요청</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* 3-1. 고객 배송 만족도 평가 카드 (완료 시) */}
-            {currentStep === 4 && (
-              <div className="p-5 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30 border border-slate-800 rounded-2xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <ThumbsUp size={14} className="text-amber-400" /> 배송 만족도 평가
-                  </span>
-                  <span className="text-[10px] text-slate-400">배송 품질 개선에 반영됩니다</span>
-                </div>
-
-                {!feedbackSubmitted ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-center gap-2 py-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setRating(star)}
-                          className="p-1 hover:scale-110 transition active:scale-95"
-                        >
-                          <Star
-                            size={24}
-                            className={
-                              star <= rating
-                                ? 'fill-amber-400 text-amber-400'
-                                : 'text-slate-600'
-                            }
-                          />
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5 justify-center">
-                      {['정시 배송', '문앞 비대면 완벽', '친절한 기사님', '상품 손상 없음'].map((tag) => {
-                        const isSelected = selectedTags.includes(tag);
-                        return (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => {
-                              setSelectedTags((prev) =>
-                                isSelected ? prev.filter((t) => t !== tag) : [...prev, tag]
-                              );
-                            }}
-                            className={`px-2.5 py-1 rounded-full text-[11px] border transition ${
-                              isSelected
-                                ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/40 font-semibold'
-                                : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:text-slate-300'
-                            }`}
-                          >
-                            {tag}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <button
-                      onClick={() => setFeedbackSubmitted(true)}
-                      className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition active:scale-95 flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20"
-                    >
-                      <Check size={13} />
-                      <span>평가 제출하기</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-3 bg-emerald-950/20 border border-emerald-500/30 rounded-xl text-center text-xs text-emerald-300 flex items-center justify-center gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-400" />
-                    <span>소중한 배송 평가가 배송기사님과 운영팀에 안전하게 전달되었습니다. 감사합니다!</span>
+                {/* 배송 사진 갤러리 */}
+                {data.photoIds && data.photoIds.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                    {data.photoIds.map((photoId, idx) => (
+                      <button
+                        key={photoId}
+                        onClick={() => setActivePhoto(photoId)}
+                        className="relative aspect-video rounded-lg overflow-hidden bg-slate-950 border border-slate-800 hover:border-indigo-500 transition group"
+                      >
+                        <img
+                          src={`/api/track/${encodeURIComponent(token)}/photo/${photoId}`}
+                          alt={`배송 사진 ${idx + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                          <ExternalLink size={16} className="text-white" />
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
@@ -585,111 +421,11 @@ export default function DeliveryTrackPage({
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer"
         >
           <div className="relative max-w-2xl max-h-[85vh] w-full flex items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`/api/track/photo/${activePhoto}`}
+              src={`/api/track/${encodeURIComponent(token)}/photo/${activePhoto}`}
               alt="배송 완료 사진 원본"
               className="max-h-[80vh] max-w-full rounded-xl object-contain shadow-2xl"
             />
-          </div>
-        </div>
-      )}
-
-      {/* 반품 / 교환 접수 모달 */}
-      {isReturnModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl relative">
-            <button
-              onClick={() => setIsReturnModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                <RotateCcw size={18} />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-white">반품 / 교환 접수 요청</h3>
-                <p className="text-xs text-slate-400">주문번호: {data?.orderNo}</p>
-              </div>
-            </div>
-
-            {returnResult ? (
-              <div className="p-4 bg-emerald-950/20 border border-emerald-500/30 rounded-xl space-y-2 text-xs">
-                <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                  <CheckCircle2 size={16} />
-                  <span>반품 오더가 접수되었습니다!</span>
-                </div>
-                <p className="text-slate-300 font-mono">
-                  접수번호: <strong className="text-emerald-300">{returnResult.returnOrderNo}</strong>
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  기사님이 지정하신 주소({data?.addrM})로 방문 회수할 예정입니다.
-                </p>
-                <button
-                  onClick={() => setIsReturnModalOpen(false)}
-                  className="w-full mt-2 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition"
-                >
-                  확인 닫기
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleReturnSubmit} className="space-y-3 text-xs">
-                <div>
-                  <label className="text-slate-400 block mb-1">반품 / 교환 사유</label>
-                  <select
-                    value={returnReason}
-                    onChange={(e) => setReturnReason(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white"
-                  >
-                    <option value="CUSTOMER_MIND_CHANGE">단순 변심 (색상/사이즈 불만족)</option>
-                    <option value="DEFECT">상품 불량 또는 부품 파손</option>
-                    <option value="WRONG_DELIVERY">오배송 (주문 상품과 다른 상품 도착)</option>
-                    <option value="DAMAGED_IN_TRANSIT">배송 중 파손</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-slate-400 block mb-1">회수지 주소</label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={`${data?.addrM || ''} ${data?.addrD || ''}`.trim()}
-                    className="w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-400 font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-slate-400 block mb-1">상세 요청사항</label>
-                  <textarea
-                    rows={3}
-                    value={returnMemo}
-                    onChange={(e) => setReturnMemo(e.target.value)}
-                    placeholder="기사님 회수 방문 시 참고사항이나 하자 상세 내용을 기재해 주세요"
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-500"
-                  />
-                </div>
-
-                <div className="pt-1 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsReturnModalOpen(false)}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={returnSubmitting}
-                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl font-bold transition shadow-md shadow-indigo-600/20"
-                  >
-                    {returnSubmitting ? '접수 처리중...' : '반품 신청 완료'}
-                  </button>
-                </div>
-              </form>
-            )}
           </div>
         </div>
       )}

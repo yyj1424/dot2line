@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ResendVerificationButton from '../ResendVerificationButton';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -17,6 +19,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setNeedsConfirm(false);
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -29,6 +32,7 @@ export default function LoginPage() {
         setError('이메일 또는 비밀번호가 올바르지 않습니다.');
       } else if (error.message.includes('Email not confirmed')) {
         setError('이메일 인증이 완료되지 않았습니다. 메일함을 확인해 주세요.');
+        setNeedsConfirm(true);
       } else {
         setError(error.message);
       }
@@ -84,6 +88,8 @@ export default function LoginPage() {
               {error}
             </p>
           )}
+
+          {needsConfirm && <ResendVerificationButton email={email} />}
 
           <button
             type="submit"
