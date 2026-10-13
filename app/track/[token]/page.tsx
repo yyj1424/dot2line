@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, use } from 'react';
+import TrackInquiry from './TrackInquiry';
 import Link from 'next/link';
 import {
   Truck,
@@ -403,6 +404,9 @@ export default function DeliveryTrackPage({
                 )}
               </div>
             </div>
+
+            {/* 6. 문의하기(수취인이 로그인 없이 남김) */}
+            <TrackInquiry token={token} />
 
             {/* 하단 안심 안내 */}
             <div className="text-center py-4">
