@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, use } from 'react';
 import TrackInquiry from './TrackInquiry';
+import ParcelTrackSection, { ParcelTrackData } from './ParcelTrackSection';
 import Link from 'next/link';
 import {
   Truck,
@@ -49,6 +50,8 @@ interface DeliveryTrackData {
   hasPhotoProof?: boolean;
   photoIds?: number[];
   hasSignProof?: boolean;
+  trackType?: 'DRIVER' | 'PARCEL';
+  parcel?: ParcelTrackData;
 }
 
 export default function DeliveryTrackPage({
@@ -105,6 +108,8 @@ export default function DeliveryTrackPage({
   };
 
   const currentStep = getStepStatus(data?.orderStatus);
+  // 택배 주문은 기사 순번·위치·완료사진이 없어 전용 조회 화면을 쓴다.
+  const isParcel = data?.trackType === 'PARCEL' && !!data.parcel;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white antialiased pb-20">
@@ -167,6 +172,10 @@ export default function DeliveryTrackPage({
         {/* 정상 데이터 렌더링 */}
         {!loading && data && (
           <>
+            {isParcel && data.parcel && <ParcelTrackSection orderNo={data.orderNo} parcel={data.parcel} />}
+
+            {!isParcel && (
+              <>
             {/* 1. 핵심 배송 상태 헤더 카드 */}
             <div className="p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl relative overflow-hidden">
               <div className="flex items-center justify-between mb-4">
@@ -363,6 +372,9 @@ export default function DeliveryTrackPage({
                   )}
                 </div>
               </div>
+            )}
+
+              </>
             )}
 
             {/* 5. 배송지 및 주문 정보 카드 */}
