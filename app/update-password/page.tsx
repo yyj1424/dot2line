@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { validatePassword, PASSWORD_HINT } from '@/utils/passwordPolicy';
+import { clearRecoveryPending } from '@/utils/recoveryFlag';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -19,8 +20,11 @@ export default function UpdatePasswordPage() {
   const [supabase] = useState(() => createClient());
 
   const [expiredNotice, setExpiredNotice] = useState(false);
+  const [recoveryNotice, setRecoveryNotice] = useState(false);
   useEffect(() => {
-    setExpiredNotice(new URLSearchParams(window.location.search).get('reason') === 'expired');
+    const reason = new URLSearchParams(window.location.search).get('reason');
+    setExpiredNotice(reason === 'expired');
+    setRecoveryNotice(reason === 'recovery');
   }, []);
 
   useEffect(() => {
@@ -76,6 +80,7 @@ export default function UpdatePasswordPage() {
       const { error: markError } = await supabase.rpc('mark_password_changed');
       if (markError) console.warn('비밀번호 변경일 기록 실패:', markError.message);
 
+      clearRecoveryPending();
       await supabase.auth.signOut();
       setIsSuccess(true);
     } catch (err: any) {
@@ -97,6 +102,11 @@ export default function UpdatePasswordPage() {
         <p className="text-slate-400 text-center mb-8">
           새롭게 사용할 비밀번호를 입력해 주세요.
         </p>
+        {recoveryNotice && (
+          <p className="mb-6 -mt-4 rounded-lg border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-center text-xs text-amber-200">
+            비밀번호를 새로 설정해야 다른 화면을 이용할 수 있습니다.
+          </p>
+        )}
         {expiredNotice && (
           <p className="mb-6 -mt-4 rounded-lg border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-center text-xs text-amber-200">
             비밀번호 변경 주기(60일)가 지났습니다. 새 비밀번호로 변경해 주세요.
@@ -175,7 +185,18 @@ export default function UpdatePasswordPage() {
         )}
 
         <p className="mt-6 text-center text-slate-400 text-sm">
-          <Link href="/login" className="text-indigo-400 hover:underline">로그인 페이지로 돌아가기</Link>
+          <button
+            type="button"
+            className="text-indigo-400 hover:underline"
+            onClick={async () => {
+              // 비밀번호를 바꾸지 않고 나가려면 복구 로그인 세션을 끊는다(남겨 두면 비밀번호 없이 들어간 상태가 된다).
+              clearRecoveryPending();
+              await supabase.auth.signOut();
+              router.push('/login');
+            }}
+          >
+            로그인 페이지로 돌아가기
+          </button>
         </p>
       </div>
     </div>
