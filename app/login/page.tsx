@@ -21,26 +21,39 @@ export default function LoginPage() {
     setError(null);
     setNeedsConfirm(false);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // 로그인은 서버 경로를 거친다 — 5회 실패 시 30분 잠금(서버가 실패 횟수를 센다).
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const body = await res.json().catch(() => ({}));
 
-    if (error) {
-      // 한국어 에러 메시지 처리
-      if (error.message.includes('Invalid login credentials')) {
-        setError('이메일 또는 비밀번호가 올바르지 않습니다.');
-      } else if (error.message.includes('Email not confirmed')) {
+      if (res.ok) {
+        // 로그인 성공 시 물류 시스템 메인 대시보드로 이동
+        router.push('/dashboard');
+        return;
+      }
+      if (body.code === 'locked') {
+        const minutes = Math.max(1, Math.ceil((body.retryAfterSec ?? 1800) / 60));
+        setError(`로그인 실패가 5회 누적되어 계정이 잠겼습니다. 약 ${minutes}분 뒤에 다시 시도해 주세요. (급하면 관리자에게 잠금 해제를 요청하세요.)`);
+      } else if (body.code === 'invalid') {
+        setError(
+          typeof body.remaining === 'number'
+            ? `이메일 또는 비밀번호가 올바르지 않습니다. (${body.remaining}회 더 틀리면 30분간 잠깁니다.)`
+            : '이메일 또는 비밀번호가 올바르지 않습니다.'
+        );
+      } else if (body.code === 'email_not_confirmed') {
         setError('이메일 인증이 완료되지 않았습니다. 메일함을 확인해 주세요.');
         setNeedsConfirm(true);
       } else {
-        setError(error.message);
+        setError(body.message || '로그인 중 오류가 발생했습니다.');
       }
-      setLoading(false);
-    } else {
-      // 로그인 성공 시 물류 시스템 메인 대시보드로 이동
-      router.push('/dashboard');
+    } catch {
+      setError('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }
+    setLoading(false);
   };
 
   return (

@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import { validatePassword, PASSWORD_HINT } from '@/utils/passwordPolicy';
 import Link from 'next/link';
 
 /**
@@ -36,15 +37,6 @@ function InviteSignupForm() {
 
   const missingParams = !orgCode || !clientMasterCd || !email || !userName;
 
-  const validatePassword = (pwd: string) => {
-    const hasLetter = /[a-zA-Z]/.test(pwd);
-    const hasNumber = /[0-9]/.test(pwd);
-    const isLongEnough = pwd.length >= 8;
-
-    if (!isLongEnough) return '비밀번호는 최소 8자 이상이어야 합니다.';
-    if (!hasLetter || !hasNumber) return '비밀번호는 영문과 숫자를 모두 포함해야 합니다.';
-    return null;
-  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,7 +153,7 @@ function InviteSignupForm() {
                 required
               />
               <p className="mt-1 text-xs text-slate-500">
-                영문, 숫자를 포함하여 8자 이상 입력하세요.
+                {PASSWORD_HINT}
               </p>
             </div>
 

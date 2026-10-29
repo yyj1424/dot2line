@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { validatePassword, PASSWORD_HINT } from '@/utils/passwordPolicy';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -16,6 +17,11 @@ export default function UpdatePasswordPage() {
   
   const router = useRouter();
   const [supabase] = useState(() => createClient());
+
+  const [expiredNotice, setExpiredNotice] = useState(false);
+  useEffect(() => {
+    setExpiredNotice(new URLSearchParams(window.location.search).get('reason') === 'expired');
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -37,16 +43,6 @@ export default function UpdatePasswordPage() {
     };
   }, [supabase.auth]);
 
-  // 비밀번호 유효성 검사 (영문 + 숫자 조합, 최소 8자)
-  const validatePassword = (pwd: string) => {
-    const hasLetter = /[a-zA-Z]/.test(pwd);
-    const hasNumber = /[0-9]/.test(pwd);
-    const isLongEnough = pwd.length >= 8;
-
-    if (!isLongEnough) return '비밀번호는 최소 8자 이상이어야 합니다.';
-    if (!hasLetter || !hasNumber) return '비밀번호는 영문과 숫자를 모두 포함해야 합니다.';
-    return null;
-  };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +72,10 @@ export default function UpdatePasswordPage() {
 
       if (error) throw error;
 
+      // 변경일 기록(60일 주기 계산용). 기록 함수가 아직 없어도(supabase/password_expiry.sql 적용 전) 변경 자체는 성공 처리한다.
+      const { error: markError } = await supabase.rpc('mark_password_changed');
+      if (markError) console.warn('비밀번호 변경일 기록 실패:', markError.message);
+
       await supabase.auth.signOut();
       setIsSuccess(true);
     } catch (err: any) {
@@ -97,6 +97,11 @@ export default function UpdatePasswordPage() {
         <p className="text-slate-400 text-center mb-8">
           새롭게 사용할 비밀번호를 입력해 주세요.
         </p>
+        {expiredNotice && (
+          <p className="mb-6 -mt-4 rounded-lg border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-center text-xs text-amber-200">
+            비밀번호 변경 주기(60일)가 지났습니다. 새 비밀번호로 변경해 주세요.
+          </p>
+        )}
 
         {checkingSession ? (
           <div className="py-8 text-center text-slate-300">재설정 링크를 확인하고 있습니다...</div>
@@ -137,7 +142,7 @@ export default function UpdatePasswordPage() {
                 placeholder="••••••••"
                 required
               />
-              <p className="mt-1 text-xs text-slate-500">영문, 숫자를 포함하여 8자 이상 입력하세요.</p>
+              <p className="mt-1 text-xs text-slate-500">{PASSWORD_HINT}</p>
             </div>
 
             {/* 새 비밀번호 확인 */}

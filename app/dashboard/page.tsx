@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import PasswordExpiryNotice from '../PasswordExpiryNotice';
 import { useRouter } from 'next/navigation';
 import {
   Box, Truck, BarChart3, Users, LogOut, ShieldCheck,
@@ -295,6 +296,7 @@ export default function DashboardPage() {
 
       {/* ================= 메인 화면 ================= */}
       <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto max-w-7xl">
+        <PasswordExpiryNotice />
         {/* 모바일 상단 유저 카드 */}
         <div className="md:hidden mb-4 p-4 bg-slate-900/60 border border-slate-800 rounded-xl">
           <div className="flex justify-between items-center mb-1.5">
