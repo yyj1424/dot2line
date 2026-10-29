@@ -11,7 +11,7 @@ type PasswordStatus = {
 
 /**
  * 비밀번호 변경 주기 안내(대시보드 상단). 상태는 Supabase 함수 password_status() 가 정한다
- * (supabase/password_expiry.sql). 함수가 아직 없으면 조용히 아무것도 보이지 않는다.
+ * (supabase/auth_security.sql). 함수가 아직 없으면 조용히 아무것도 보이지 않는다.
  *   due       → "지금 변경 / 나중에(30일 유예)" 안내창
  *   postponed → 남은 유예 기간 안내
  *   blocked   → 변경 화면으로 이동(변경 전에는 사용 불가)

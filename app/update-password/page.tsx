@@ -76,7 +76,7 @@ export default function UpdatePasswordPage() {
 
       if (error) throw error;
 
-      // 변경일 기록(60일 주기 계산용). 기록 함수가 아직 없어도(supabase/password_expiry.sql 적용 전) 변경 자체는 성공 처리한다.
+      // 변경일 기록(60일 주기 계산용). 기록 함수가 아직 없어도(supabase/auth_security.sql 적용 전) 변경 자체는 성공 처리한다.
       const { error: markError } = await supabase.rpc('mark_password_changed');
       if (markError) console.warn('비밀번호 변경일 기록 실패:', markError.message);
 
